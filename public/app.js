@@ -21,6 +21,9 @@
     hatCap: '<svg viewBox="0 0 48 48"><path d="M8 33c0-11 7-20 16-20s16 9 16 20z" fill="var(--c2)" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><path d="M4 33h40v5H4z" fill="var(--c4)" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="11" r="3.5" fill="var(--c4)" stroke="#0A0E19" stroke-width="2.5"/></svg>',
     tug: '<svg viewBox="0 0 48 48"><path d="M3 26c7-3 13 3 21 0s14-3 21 0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M3 26c7-3 13 3 21 0s14-3 21 0" fill="none" stroke="var(--c4)" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="21" y="18" width="6" height="14" rx="2" fill="var(--c0)" stroke="currentColor" stroke-width="2.5"/><path d="M24 8v6M24 36v6" stroke="currentColor" stroke-width="2.5" stroke-dasharray="2 3"/></svg>',
     stones: '<svg viewBox="0 0 48 48"><rect x="8" y="37" width="32" height="7" rx="3.5" fill="#A39A88" stroke="currentColor" stroke-width="2.5"/><rect x="11" y="29" width="27" height="7" rx="3.5" fill="#B9AF9B" stroke="currentColor" stroke-width="2.5"/><rect x="13" y="21" width="22" height="7" rx="3.5" fill="#8E8676" stroke="currentColor" stroke-width="2.5"/><rect x="16" y="13" width="17" height="7" rx="3.5" fill="#B0A48E" stroke="currentColor" stroke-width="2.5"/><rect x="19" y="5" width="11" height="7" rx="3.5" fill="#9A8F7C" stroke="currentColor" stroke-width="2.5"/></svg>',
+    hoop: '<svg viewBox="0 0 48 48"><circle cx="20" cy="27" r="15" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="20" cy="27" r="15" fill="none" stroke="var(--c0)" stroke-width="2.4"/><path d="M44 6L30 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M44 6L30 24" stroke="var(--c4)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 44h40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".4"/></svg>',
+    qabban: '<svg viewBox="0 0 48 48"><path d="M24 4v6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="4" r="2.5" fill="currentColor"/><path d="M6 14h38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M6 14h38" stroke="var(--c4)" stroke-width="1.6" stroke-dasharray="2 4"/><path d="M10 14l-4 14M10 14l4 14" stroke="currentColor" stroke-width="2"/><path d="M2 28h16a8 6 0 0 1-16 0z" fill="var(--c6)" stroke="currentColor" stroke-width="2.5"/><path d="M36 14v8" stroke="currentColor" stroke-width="2.5"/><rect x="31" y="22" width="10" height="12" rx="3" fill="var(--c1)" stroke="currentColor" stroke-width="2.5"/></svg>',
+    jumprope: '<svg viewBox="0 0 48 48"><path d="M6 14C6 46 42 46 42 14" fill="none" stroke="var(--c2)" stroke-width="3.5" stroke-linecap="round"/><rect x="3" y="7" width="6" height="10" rx="2" fill="var(--c4)" stroke="currentColor" stroke-width="2.4"/><rect x="39" y="7" width="6" height="10" rx="2" fill="var(--c4)" stroke="currentColor" stroke-width="2.4"/><circle cx="24" cy="10" r="4.5" fill="currentColor"/><path d="M24 15v11M24 19l-6 4M24 19l6 4M24 26l-5 7M24 26l5 7" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
     help: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4.3 2.6c-1 .6-1.5 1.1-1.5 2.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor"/></svg>',
     moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>',
     sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>',
@@ -32,7 +35,8 @@
     share: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
-  const GAME_ORDER = ['cassette', 'antenna', 'rotary', 't9', 'top', 'marbles', 'hat', 'tug', 'stones'];
+  const GAME_ORDER = ['cassette', 'antenna', 'rotary', 't9', 'top', 'marbles', 'hat', 'tug', 'stones', 'hoop', 'qabban', 'jumprope'];
+  const NG = GAME_ORDER.length, STEP = 360 / NG;
 
   // ───────── الحالة ─────────
   let pid = LS.get('zaman_pid'); if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); LS.set('zaman_pid', pid); }
@@ -184,7 +188,7 @@
         </div>
         <h1 class="title">قعدة زمان</h1>
         <p class="sub">ألعاب من أيام الكاسيت والحارة</p>
-        <div class="ticker"><div>${('<span>رجّع الشريط بالقلم · ظبّط الأنتين · دوّر الرقم عالدولاب · اكتب رسالة بالأزرار · لفّ البلبل · ارمي الكلّة · طاق طاق طاقية · شدّ الحبل · عمّر السبع حجار ·</span>').repeat(2)}</div></div>
+        <div class="ticker"><div>${('<span>رجّع الشريط بالقلم · ظبّط الأنتين · دوّر الرقم عالدولاب · اكتب رسالة بالأزرار · لفّ البلبل · ارمي الكلّة · طاق طاق طاقية · شدّ الحبل · عمّر السبع حجار · سوق الدولاب بالعصاية · وزّن عالقبّان · نطّ الحبل ·</span>').repeat(2)}</div></div>
         <div class="cover-actions">
           <button class="btn big" id="newBtn">افتح قعدة جديدة</button>
           <div class="join-row"><input id="codeIn" maxlength="5" placeholder="الكود" autocomplete="off" dir="ltr" inputmode="text"><button class="btn ghost" id="joinBtn">فوت</button></div>
@@ -199,7 +203,7 @@
       // التلفزيون: تشويش وقنوات
       const cv = $('.static', e), cx = cv.getContext('2d'); cv.width = 80; cv.height = 60; const img = cx.createImageData(80, 60);
       const chEl = $('.tv-ch', e); let k = 0, staticOn = true;
-      const show = () => { staticOn = false; chEl.innerHTML = I[GAME_ORDER[k % 9]]; chEl.classList.add('on'); k++; setTimeout(() => { chEl.classList.remove('on'); staticOn = true; }, 1700); };
+      const show = () => { staticOn = false; chEl.innerHTML = I[GAME_ORDER[k % NG]]; chEl.classList.add('on'); k++; setTimeout(() => { chEl.classList.remove('on'); staticOn = true; }, 1700); };
       let raf; const f = () => { if (staticOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 200; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
       const iv = setInterval(show, 2300); setTimeout(show, 500);
       sc.destroy = () => { cancelAnimationFrame(raf); clearInterval(iv); };
@@ -282,7 +286,7 @@
       if (!isHost()) { box.innerHTML = `<div class="card mode-info"><b>${{ solo: 'فردي: كل واحد لحالو', team: 'فرق: الفريق كله بيلعب', relay: 'فرق: كل جولة عضو من كل فريق' }[s.mode]}</b><small>${s.gameCount} ألعاب${s.family ? ' · وضع العيلة' : ''}</small></div>`; return; }
       box.innerHTML = `<div class="card"><div class="fld"><span>طريقة اللعب</span><div class="seg three" id="md"><button data-v="solo">فردي</button><button data-v="team">الفريق كله</button><button data-v="relay">عضو كل جولة</button></div></div>
         ${s.mode !== 'solo' ? `<div class="fld"><span>عدد الفرق</span><div class="seg" id="tc">${[2, 3, 4].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>` : ''}
-        <div class="fld"><span>كم لعبة؟</span><div class="seg" id="gc">${[3, 5, 7, 9].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>
+        <div class="fld"><span>كم لعبة؟</span><div class="seg" id="gc">${[3, 6, 9, 12].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>
         <div class="fld"><span>كشف النتيجة</span><div class="seg" id="rv"><button data-v="now">بعد كل لعبة</button><button data-v="end">بالآخر</button></div></div>
         <label class="tgl"><input type="checkbox" id="fm" ${s.family ? 'checked' : ''}><span></span><div><b>وضع العيلة</b><small>كل واحد بيختار جيله (كاسيت أو موبايل)، وبالآخر منعرف مين أشطر</small></div></label></div>`;
       const mark = (id, v) => $$(`#${id} button`, box).forEach(b => b.classList.toggle('on', b.dataset.v === String(v)));
@@ -357,7 +361,7 @@
   function wheelScreen(key) {
     const c = S.cur; const played = S.rounds.length; const total = played + S.pool.length;
     const e = el(`<section class="wheel-sc"><p class="step">اللعبة ${played + 1} من ${total}</p><p class="spin-say">الدولاب عم يدور… 📺</p>
-      <div class="dial-wrap"><div class="dial"><div class="dial-ring">${GAME_ORDER.map((g, i) => { const a = i * 40; const live = S.pool.includes(g); return `<span class="dch ${live ? '' : 'dim'}" data-g="${g}" style="transform:rotate(${a}deg) translateY(-38cqw) rotate(${-a}deg)">${I[g]}</span>`; }).join('')}</div>
+      <div class="dial-wrap"><div class="dial"><div class="dial-ring">${GAME_ORDER.map((g, i) => { const a = i * STEP; const live = S.pool.includes(g); return `<span class="dch ${live ? '' : 'dim'}" data-g="${g}" style="transform:rotate(${a}deg) translateY(-38cqw) rotate(${-a}deg)">${I[g]}</span>`; }).join('')}</div>
       <div class="knob"><i class="pointer"></i><b>قناة</b></div></div><div class="dial-tv"><div class="tv-screen small"><canvas class="static"></canvas><div class="tv-ch"></div></div></div></div>
       </section>`);
     const sc = { key, el: e };
@@ -367,14 +371,14 @@
     const f = () => { if (staticOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 190; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
     sc.spinTo = (g, done) => {
       sc.spinning = true;
-      const idx = GAME_ORDER.indexOf(g); const target = 360 * 4 + idx * 40;
+      const idx = GAME_ORDER.indexOf(g); const target = 360 * 4 + idx * STEP;
       const knob = $('.knob', e); const t0 = performance.now(), dur = 3000;
       let lastTick = 0;
       const anim = t => {
         const k = Math.min(1, (t - t0) / dur); const ease = 1 - Math.pow(1 - k, 3); rot = target * ease;
         knob.style.transform = `rotate(${rot}deg)`;
-        const cur = Math.round(rot / 40); if (cur !== lastTick) { lastTick = cur; beep(900, 0.015, 'square', 0.02); }
-        const under = ((Math.round(rot / 40) % 9) + 9) % 9;
+        const cur = Math.round(rot / STEP); if (cur !== lastTick) { lastTick = cur; beep(900, 0.015, 'square', 0.02); }
+        const under = ((Math.round(rot / STEP) % NG) + NG) % NG;
         $$('.dch', e).forEach((d, i) => d.classList.toggle('pass', i === under));
         if (k < 1) requestAnimationFrame(anim);
         else {

@@ -27,6 +27,9 @@ const GAMES = {
   hat:      { dur: 0, server: true },
   tug:      { dur: 0, server: true },
   stones:   { dur: 30 },
+  hoop:     { dur: 50 },
+  qabban:   { dur: 60 },
+  jumprope: { dur: 50 },
 };
 const GAME_IDS = Object.keys(GAMES);
 const TEAM_NAMES = ['فريق الكاسيت', 'فريق الأنتين', 'فريق الدولاب', 'فريق البلبل'];
@@ -86,7 +89,7 @@ function makeRoom(hostId) {
     code, hostKey: crypto.randomBytes(12).toString('hex'), hostId, hostLeftAt: null,
     createdAt: Date.now(), lastActivity: Date.now(),
     players: {}, order: [], kicked: new Set(),
-    settings: { mode: 'solo', teamCount: 2, teams: [], gameCount: 9, family: false, reveal: 'now', sessionName: '', sessionType: 'شلة', groupPhoto: null },
+    settings: { mode: 'solo', teamCount: 2, teams: [], gameCount: 12, family: false, reveal: 'now', sessionName: '', sessionType: 'شلة', groupPhoto: null },
     phase: 'lobby', pool: [], rounds: [], cur: null, relayIdx: {}, final: null, revealStep: -1, revealMode: null, photoVer: 0, _t: {},
   };
   rooms.set(code, r); bump('rooms'); bump('days', day());
@@ -327,7 +330,7 @@ function hostAction(r, m, pid) {
       if (r.phase !== 'lobby') { for (const k of ['sessionName', 'sessionType']) if (k in m.v) s[k] = String(m.v[k]).slice(0, 40); break; }
       for (const k of allowed) if (k in m.v) s[k] = m.v[k];
       s.teamCount = Math.min(4, Math.max(2, +s.teamCount || 2));
-      s.gameCount = [3, 5, 7, 9].includes(+s.gameCount) ? +s.gameCount : 9;
+      s.gameCount = [3, 6, 9, 12].includes(+s.gameCount) ? +s.gameCount : 12;
       if (s.mode !== 'solo') { // ضمان إنو كل لاعب بفريق
         for (const id of activeIds(r)) { const p = r.players[id]; if (p.team == null || p.team >= s.teamCount) p.team = smallestTeam(r); }
       }
@@ -546,7 +549,7 @@ app.get('/qr/:code.svg', async (req, res) => {
 app.get('/healthz', (req, res) => res.send('ok'));
 
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-const GAME_AR = { cassette: 'لفّ الكاسيت', antenna: 'ظبّط الأنتين', rotary: 'التلفون أبو دولاب', t9: 'رسالة T9', top: 'البلبل', marbles: 'الكلل', hat: 'طاق طاق طاقية', tug: 'شدّ الحبل', stones: 'السبع حجار' };
+const GAME_AR = { cassette: 'لفّ الكاسيت', antenna: 'ظبّط الأنتين', rotary: 'التلفون أبو دولاب', t9: 'رسالة T9', top: 'البلبل', marbles: 'الكلل', hat: 'طاق طاق طاقية', tug: 'شدّ الحبل', stones: 'السبع حجار', hoop: 'الدولاب والعصاية', qabban: 'القبّان', jumprope: 'نطّ الحبل' };
 const MODE_AR = { solo: 'فردي', team: 'الفريق كاملاً', relay: 'عضو لكل جولة' };
 function statsPage(admin) {
   const days = Object.entries(stats.days || {}).sort().slice(-14);

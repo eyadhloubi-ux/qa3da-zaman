@@ -767,6 +767,251 @@
     }
   };
 
+  // ═══════════════ 10) الدولاب والعصاية ═══════════════
+  // طريق بيلفّ، والدولاب لازم يضل ماشي وما يطلع برّا الطريق. كبسة يمين = ضربة بتدفشه يمين، وشمال = شمال.
+  const hoop = {
+    mount(el, X) {
+      const S = Stage(el), ctx = S.ctx, R = Runner(X);
+      const s1 = X.rng() * 6, s2 = X.rng() * 6, s3 = X.rng() * 6;
+      const center = d => 9 * Math.sin(d / 21 + s1) + 6 * Math.sin(d / 8.5 + s2) + 3 * Math.sin(d / 4.2 + s3);
+      const halfW = d => Math.max(4.2, 8 - d * 0.018);
+      let d = 0, x = center(0), vx = 0, v = 0, started = false, fallen = false, fallT = 0, hitT = -1, hitSide = 0, slowT = 0, roll = 0, camX = x, P = pal(), msg = '', why = '';
+      function hit(e) {
+        if (!R.started() || R.done || fallen) return;
+        const p = S.local(e); const side = p.x < S.W / 2 ? -1 : 1;
+        started = true; v = Math.min(8.5, v + 1.05); vx += side * 2.6; hitT = performance.now(); hitSide = side;
+        beep(side < 0 ? 520 : 620, 0.04, 'square', 0.035); buzz(10);
+      }
+      S.cv.addEventListener('pointerdown', hit);
+      function fall(reason) { if (fallen) return; fallen = true; why = reason; fallT = 0; beep(180, 0.3, 'sawtooth', 0.05); buzz([60, 40, 60]); fin(); }
+      function fin() { const m = Math.floor(d); R.finish(m, m + ' م', true); }
+      const stop = loop((dt) => {
+        P = pal();
+        if (R.started() && !R.done && started && !fallen) {
+          v = Math.max(0, v - (0.85 + v * 0.09) * dt);
+          d += v * dt; roll += v * dt * 2.2;
+          x += vx * dt; vx *= Math.pow(0.18, dt);
+          x += Math.sin(performance.now() / 260) * (v < 2.5 ? (2.5 - v) * 0.6 : 0.15) * dt; // رجفة الدولاب لما يبطّئ
+          if (v < 1.1) { slowT += dt; if (slowT > 0.7) fall('وقف الدولاب ووقع'); } else slowT = 0;
+          if (Math.abs(x - center(d)) > halfW(d)) fall('طلع برّا الطريق');
+          R.prog(Math.min(1, d / 150));
+        }
+        if (fallen) fallT = Math.min(1, fallT + dt * 2.5);
+        if (!R.done && R.started() && R.left() <= 0) fin();
+        camX += (x - camX) * Math.min(1, dt * 3);
+        const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+        const k = W / 32, ppm = H / 40, by = H * 0.74;
+        const sx = wx => W / 2 + (wx - camX) * k, sy = wd => by - (wd - d) * ppm;
+        // التراب والطريق
+        ctx.fillStyle = '#6E8F4E'; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(0,0,0,.08)'; for (let i = 0; i < 30; i++) { const yy = ((i * 53 + d * ppm) % (H + 40)) - 20, xx = (i * 97) % W; ctx.fillRect(xx, yy, 3, 8); }
+        ctx.beginPath();
+        for (let wd = d - 12; wd <= d + 44; wd += 0.8) { const yy = sy(wd), xx = sx(center(wd) - halfW(wd)); wd === d - 12 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); }
+        for (let wd = d + 44; wd >= d - 12; wd -= 0.8) ctx.lineTo(sx(center(wd) + halfW(wd)), sy(wd));
+        ctx.closePath(); ctx.fillStyle = '#C9A774'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
+        // حجار الطريق
+        ctx.fillStyle = 'rgba(90,58,42,.25)';
+        for (let wd = Math.floor(d - 12); wd < d + 44; wd += 1.6) { const c0 = center(wd); for (const o of [-0.5, 0.3]) { ctx.beginPath(); ctx.ellipse(sx(c0 + o * halfW(wd) + Math.sin(wd * 3) * 1.5), sy(wd), 3, 2, 0, 0, TAU); ctx.fill(); } }
+        // علامات المسافة
+        for (let m = Math.ceil((d - 12) / 10) * 10; m < d + 44; m += 10) { if (m <= 0) continue; const yy = sy(m); ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(243,234,216,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(center(m) - halfW(m)), yy); ctx.lineTo(sx(center(m) + halfW(m)), yy); ctx.stroke(); ctx.setLineDash([]); txt(ctx, m + ' م', sx(center(m) + halfW(m)) + 22, yy, 12, '#F3EAD8', 700); }
+        // الدولاب
+        const hx = sx(x), hy = by;
+        ctx.save(); ctx.translate(hx, hy);
+        const tilt = fallen ? (Math.sign(vx || 1) * fallT * 1.3) : Math.max(-0.5, Math.min(0.5, vx * 0.07 + (v < 2.5 ? Math.sin(performance.now() / 150) * (2.5 - v) * 0.08 : 0)));
+        ctx.rotate(tilt);
+        const hr = Math.min(W, H) * 0.09;
+        ctx.beginPath(); ctx.ellipse(0, hr * 0.15, hr * 0.32, hr * 0.12, 0, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fill();
+        // دولاب من ورا: إهليلج رفيع مع خطوط بتمشي
+        ctx.beginPath(); ctx.ellipse(0, -hr, hr * 0.26, hr, 0, 0, TAU); ctx.lineWidth = 7; ctx.strokeStyle = '#0A0E19'; ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = P.orange; ctx.stroke();
+        for (let i = 0; i < 6; i++) { const a = roll + i * TAU / 6; const yy = -hr - Math.cos(a) * hr; if (Math.sin(a) > 0) { ctx.fillStyle = '#0A0E19'; ctx.fillRect(-hr * 0.28, yy - 2, hr * 0.56, 4); } }
+        ctx.restore();
+        // العصاية: بتضرب من الجهة اللي كبست عليها
+        const ht = (performance.now() - hitT) / 1000;
+        if (ht < 0.25 && !fallen) {
+          const side = hitSide; ctx.save(); ctx.translate(hx - side * hr * 0.35, hy - hr * 0.9); ctx.rotate(side * (0.9 - ht * 2));
+          ctx.lineCap = 'round'; ctx.lineWidth = 7; ctx.strokeStyle = '#0A0E19'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-side * hr * 1.6, hr * 1.3); ctx.stroke();
+          ctx.lineWidth = 3.5; ctx.strokeStyle = P.butter; ctx.stroke(); ctx.restore();
+        }
+        // السرعة والمسافة
+        rr(ctx, 12, 12, 130, 34, 17); ctx.fillStyle = 'rgba(15,20,36,.78)'; ctx.fill();
+        txt(ctx, '⁦' + Math.floor(d) + ' م⁩', 77, 29, 20, '#F3EAD8', 700, 'ui-monospace, monospace');
+        const bw = Math.min(W * 0.4, 150); rr(ctx, W - bw - 12, 22, bw, 12, 6); ctx.fillStyle = 'rgba(15,20,36,.6)'; ctx.fill();
+        rr(ctx, W - 12 - bw * Math.min(1, v / 8.5), 22, bw * Math.min(1, v / 8.5), 12, 6); ctx.fillStyle = v < 2 ? P.rose : P.butter; ctx.fill();
+        if (!started && R.started()) { rr(ctx, W / 2 - 150, H * 0.36 - 24, 300, 48, 24); ctx.fillStyle = 'rgba(15,20,36,.85)'; ctx.fill(); txt(ctx, 'اكبس يمين أو شمال لتضرب الدولاب', W / 2, H * 0.36, 15, '#F3EAD8'); }
+        else if (!R.done) { ctx.globalAlpha = 0.5; txt(ctx, '⟵ شمال', W * 0.18, H - 22, 14, '#F3EAD8'); txt(ctx, 'يمين ⟶', W * 0.82, H - 22, 14, '#F3EAD8'); ctx.globalAlpha = 1; }
+        if (fallen || R.done) { rr(ctx, W / 2 - 140, H * 0.36 - 30, 280, 60, 20); ctx.fillStyle = 'rgba(15,20,36,.88)'; ctx.fill(); txt(ctx, why || 'خلص الوقت', W / 2, H * 0.36 - 10, 15, P.butter); txt(ctx, 'المسافة: ' + Math.floor(d) + ' م', W / 2, H * 0.36 + 14, 16, '#F3EAD8'); }
+        void msg;
+      });
+      return { destroy() { stop(); S.destroy(); }, forceEnd: fin };
+    }
+  };
+
+  // ═══════════════ 11) القبّان ═══════════════
+  // ميزان البقالة: حرّك الثقل على الذراع لحد ما يوقف القبّان مستوي. 3 أغراض، والأسرع بيربح.
+  const ITEMS = [['🥔', 'بطاطا'], ['🍅', 'بندورة'], ['🧅', 'بصل'], ['🍋', 'ليمون'], ['🍉', 'بطيخة'], ['🍆', 'باذنجان'], ['🥒', 'خيار'], ['🍊', 'برتقان'], ['🍇', 'عنب'], ['🧀', 'جبنة']];
+  const qabban = {
+    mount(el, X) {
+      const S = Stage(el), ctx = S.ctx, R = Runner(X);
+      const picks = []; while (picks.length < 3) { const i = Math.floor(X.rng() * ITEMS.length); if (!picks.includes(i)) picks.push(i); }
+      const weights = picks.map(() => Math.round((0.8 + X.rng() * 8.6) * 20) / 20); // كيلو، لأقرب 50 غرام
+      const MAXKG = 10, TOL = 0.12, SENS = 0.45;
+      let n = 0, pos = 0.5 + X.rng() * 2, ang = 0, angV = 0, hold = 0, drag = null, dragPos = 0, okT = -9, P = pal(), shown = null;
+      function geo() {
+        const W = S.W, H = S.H, px = W * 0.3, py = H * 0.34, Lr = W * 0.62, Ll = W * 0.16;
+        return { W, H, px, py, Lr, Ll };
+      }
+      function down(e) { if (!R.started() || R.done) return; S.cv.setPointerCapture(e.pointerId); drag = S.local(e).x; dragPos = pos; }
+      function move(e) { if (drag == null) return; const G = geo(); pos = Math.max(0, Math.min(MAXKG, dragPos + (S.local(e).x - drag) / G.Lr * MAXKG * SENS)); }
+      function up() { drag = null; }
+      S.cv.addEventListener('pointerdown', down); S.cv.addEventListener('pointermove', move); S.cv.addEventListener('pointerup', up); S.cv.addEventListener('pointercancel', up);
+      function fin(done) { const ms = R.elapsed(); if (done) R.finish(tRk(ms), secs(ms), true); else R.finish(n, n + '/3 أغراض', false); }
+      const stop = loop((dt) => {
+        P = pal();
+        const w = weights[Math.min(n, 2)];
+        const torque = (pos - w) / MAXKG; // موجب = الذراع الطويل تقيل → بينزل يمين
+        const targetAng = Math.max(-0.32, Math.min(0.32, torque * 2.4));
+        angV += ((targetAng - ang) * 38 - angV * 4.2) * dt; ang += angV * dt; // تأرجح مخمّد
+        if (R.started() && !R.done) {
+          const level = Math.abs(pos - w) <= TOL && Math.abs(ang) < 0.045 && Math.abs(angV) < 0.25 && drag == null;
+          if (level) hold += dt; else hold = Math.max(0, hold - dt * 2);
+          if (hold >= 0.9) {
+            shown = { kg: w, t: performance.now() }; n++; hold = 0; okT = performance.now(); beep(990, 0.12, 'triangle', 0.05); buzz(30); R.prog(n / 3);
+            if (n >= 3) fin(true); else { pos = Math.max(0, Math.min(MAXKG, pos + (X.rng() < 0.5 ? -1 : 1) * (1.5 + X.rng() * 2))); angV += 1.5; }
+          }
+          if (!R.done && R.left() <= 0) fin(false);
+        }
+        const G = geo(); ctx.clearRect(0, 0, G.W, G.H);
+        // الدكانة: رفّ خشب
+        ctx.fillStyle = 'rgba(201,167,116,.16)'; ctx.fillRect(0, G.H * 0.78, G.W, G.H * 0.22); ctx.fillStyle = '#5A3A2A'; ctx.fillRect(0, G.H * 0.78, G.W, 6);
+        // التعليقة
+        ctx.strokeStyle = '#F3EAD8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(G.px, 0); ctx.lineTo(G.px, G.py - 22); ctx.stroke();
+        ctx.beginPath(); ctx.arc(G.px, G.py - 14, 9, Math.PI * 1.1, Math.PI * 1.9 + Math.PI, false); ctx.stroke();
+        ctx.save(); ctx.translate(G.px, G.py); ctx.rotate(ang);
+        // الذراع
+        ctx.lineCap = 'round'; ctx.lineWidth = 10; ctx.strokeStyle = '#0A0E19'; ctx.beginPath(); ctx.moveTo(-G.Ll, 0); ctx.lineTo(G.Lr, 0); ctx.stroke();
+        ctx.lineWidth = 6; ctx.strokeStyle = '#B9AF9B'; ctx.stroke();
+        // التدريج
+        for (let kg = 0; kg <= MAXKG * 2; kg++) { const xx = G.Lr * 0.08 + (kg / 2) / MAXKG * G.Lr * 0.9; ctx.strokeStyle = '#0A0E19'; ctx.lineWidth = kg % 2 ? 1.2 : 2; ctx.beginPath(); ctx.moveTo(xx, -3); ctx.lineTo(xx, kg % 2 ? 3 : 7); ctx.stroke(); if (kg % 4 === 0) { ctx.save(); ctx.rotate(-ang); txt(ctx, String(kg / 2), xx * Math.cos(ang), 18 + xx * Math.sin(ang) * 0, 11, 'rgba(243,234,216,.75)', 700, 'ui-monospace, monospace'); ctx.restore(); } }
+        ctx.beginPath(); ctx.arc(0, 0, 7, 0, TAU); ctx.fillStyle = P.butter; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
+        // الثقل (الرمّانة)
+        const wx = G.Lr * 0.08 + pos / MAXKG * G.Lr * 0.9;
+        ctx.save(); ctx.translate(wx, 0); ctx.rotate(-ang);
+        ctx.strokeStyle = '#0A0E19'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-15, 22); ctx.quadraticCurveTo(-19, 50, 0, 52); ctx.quadraticCurveTo(19, 50, 15, 22); ctx.closePath(); ctx.fillStyle = drag != null ? P.butter : P.denim; ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-9, 27, 4, 16);
+        ctx.restore();
+        // الكفّة والغرض
+        ctx.save(); ctx.translate(-G.Ll * 0.85, 0); ctx.rotate(-ang);
+        const pr = Math.min(G.W * 0.13, 52);
+        ctx.strokeStyle = '#0A0E19'; ctx.lineWidth = 2; for (const o of [-pr * 0.9, 0, pr * 0.9]) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(o, pr * 1.4); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(-pr, pr * 1.4); ctx.quadraticCurveTo(0, pr * 2.1, pr, pr * 1.4); ctx.closePath(); ctx.fillStyle = '#C9CED8'; ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
+        if (n < 3) { ctx.font = `${pr * 1.05}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillText(ITEMS[picks[n]][0], 0, pr * 1.45); }
+        ctx.restore();
+        ctx.restore();
+        // مؤشر الاستواء
+        const lv = Math.max(-1, Math.min(1, ang / 0.32));
+        const mx = G.W / 2, my = G.H * 0.66, mw = Math.min(G.W * 0.7, 260);
+        rr(ctx, mx - mw / 2, my - 10, mw, 20, 10); ctx.fillStyle = 'rgba(15,20,36,.7)'; ctx.fill();
+        rr(ctx, mx - 16, my - 10, 32, 20, 6); ctx.fillStyle = 'rgba(63,167,156,.45)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(mx + lv * mw * 0.45, my, 8, 0, TAU); ctx.fillStyle = Math.abs(ang) < 0.045 ? P.aqua : P.butter; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
+        if (hold > 0) { rr(ctx, mx - 50, my + 18, 100 * Math.min(1, hold / 0.9), 7, 3.5); ctx.fillStyle = P.aqua; ctx.fill(); }
+        // الأغراض
+        for (let i = 0; i < 3; i++) { const bx = G.W / 2 + (i - 1) * 46; rr(ctx, bx - 19, G.H * 0.83, 38, 38, 10); ctx.fillStyle = i < n ? P.aqua : 'rgba(255,255,255,.12)'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#0A0E19'; ctx.stroke(); ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = i <= n ? 1 : 0.35; ctx.fillText(ITEMS[picks[i]][0], bx, G.H * 0.83 + 20); ctx.globalAlpha = 1; }
+        if (shown && performance.now() - shown.t < 1300) { rr(ctx, G.W / 2 - 90, G.H * 0.08 - 18, 180, 36, 18); ctx.fillStyle = 'rgba(15,20,36,.9)'; ctx.fill(); txt(ctx, '✓ ' + shown.kg.toFixed(2) + ' كيلو', G.W / 2, G.H * 0.08, 17, P.butter); }
+        if (!R.done && R.started()) txt(ctx, 'اسحب يمين وشمال لتحرّك الثقل، وخلّي القبّان مستوي', G.W / 2, G.H - 14, 12.5, '#F3EAD8', 600);
+        if (R.done) txt(ctx, n >= 3 ? 'وزّنت التلاتة! ⚖️' : n + '/3', G.W / 2, G.H * 0.08, 20, P.butter, 700, TFONT);
+      });
+      return { destroy() { stop(); S.destroy(); }, forceEnd() { fin(false); } };
+    }
+  };
+
+  // ═══════════════ 12) نطّ الحبل ═══════════════
+  // اتنين عم يلفّوا الحبل وهو بيسرع. اكبس لتنطّ لما ينزل الحبل لتحت. 3 أرواح.
+  const jumprope = {
+    mount(el, X) {
+      const S = Stage(el), ctx = S.ctx, R = Runner(X);
+      const AIR = 0.46;
+      let phase = Math.PI, period = 1.35, jumps = 0, lives = 3, jumpAt = -9, stumbleT = -9, lastPass = 0, t = 0, msgT = -9, msg = '', P = pal(), passes = 0;
+      function tap() {
+        if (!R.started() || R.done) return;
+        if (t - jumpAt < AIR || t - stumbleT < 0.7) return;
+        jumpAt = t; beep(660, 0.04, 'triangle', 0.03); buzz(8);
+      }
+      S.cv.addEventListener('pointerdown', tap);
+      function fin() { R.finish(jumps, jumps + ' نطّة', true); }
+      const stop = loop((dt) => {
+        P = pal();
+        if (R.started() && !R.done) {
+          t += dt;
+          const before = phase; phase += dt / period * TAU;
+          // الحبل بيمرّ تحت الرجلين لما الطور يعدّي مضاعفات 2π
+          if (Math.floor(before / TAU) !== Math.floor(phase / TAU)) {
+            passes++;
+            const air = t - jumpAt, inAir = air > 0.03 && air < AIR;
+            if (t - stumbleT < 0.7) { /* لسّا عم يقوم */ }
+            else if (inAir) { jumps++; msg = String(jumps); msgT = t; beep(880, 0.05, 'square', 0.03); R.prog(Math.min(1, jumps / 40)); period = Math.max(0.52, period * 0.968); }
+            else { lives--; stumbleT = t; msg = 'علق الحبل!'; msgT = t; beep(200, 0.25, 'sawtooth', 0.05); buzz([50, 30, 50]); period = Math.min(1.35, period * 1.12); if (lives <= 0) fin(); }
+          }
+          if (!R.done && R.left() <= 0) fin();
+        }
+        const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+        const gy = H * 0.78, cx = W / 2;
+        ctx.fillStyle = 'rgba(201,167,116,.18)'; ctx.fillRect(0, gy, W, H - gy); ctx.strokeStyle = 'rgba(243,234,216,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        // اللفّيفة
+        const hx = Math.min(W * 0.42, 170), hy = gy - H * 0.22;
+        const R0 = (gy - hy) + 6;
+        const ry = Math.cos(phase) * R0, front = Math.sin(phase) < 0; // ورا لما يكون فوق
+        function rope(behind) {
+          if (behind === front) return;
+          ctx.lineWidth = 5; ctx.strokeStyle = '#0A0E19'; ctx.beginPath(); ctx.moveTo(cx - hx, hy); ctx.quadraticCurveTo(cx, hy + ry * 2 - (ry > 0 ? 0 : 0), cx + hx, hy); ctx.stroke();
+          ctx.lineWidth = 2.5; ctx.strokeStyle = P.rose; ctx.stroke();
+        }
+        rope(true);
+        // اللاعب
+        const air = t - jumpAt; const jh = air > 0 && air < AIR ? Math.sin(air / AIR * Math.PI) * H * 0.1 : 0;
+        const stum = t - stumbleT < 0.7;
+        const fy = gy - jh; const sc = Math.min(W, H) / 380;
+        ctx.save(); ctx.translate(cx, fy); ctx.scale(sc, sc); if (stum) ctx.rotate(Math.sin((t - stumbleT) * 30) * 0.12);
+        ctx.lineCap = 'round'; ctx.strokeStyle = '#0A0E19'; ctx.lineWidth = 7;
+        const kneel = jh > 0 ? 8 : 0;
+        ctx.beginPath(); ctx.moveTo(-10, 0 - kneel); ctx.lineTo(-6, -38); ctx.moveTo(10, 0 - kneel); ctx.lineTo(6, -38); ctx.stroke();
+        ctx.lineWidth = 16; ctx.strokeStyle = P.orange; ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(0, -78); ctx.stroke();
+        ctx.lineWidth = 6; ctx.strokeStyle = '#0A0E19'; ctx.beginPath(); ctx.moveTo(-6, -72); ctx.lineTo(-24, jh > 0 ? -92 : -56); ctx.moveTo(6, -72); ctx.lineTo(24, jh > 0 ? -92 : -56); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, -96, 15, 0, TAU); ctx.fillStyle = '#E9C9A0'; ctx.fill(); ctx.lineWidth = 3.5; ctx.stroke();
+        ctx.fillStyle = '#0A0E19'; ctx.beginPath(); ctx.arc(-5, -98, 2, 0, TAU); ctx.arc(5, -98, 2, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -92, 5, 0.2, Math.PI - 0.2, stum); ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+        // ضلّ
+        ctx.beginPath(); ctx.ellipse(cx, gy + 4, 26 * sc * (1 - jh / (H * 0.25)), 5, 0, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fill();
+        rope(false);
+        // اللي عم يلفّوا
+        for (const sd of [-1, 1]) {
+          const x0 = cx + sd * (hx + 26 * sc);
+          ctx.save(); ctx.translate(x0, gy); ctx.scale(sc * 0.85, sc * 0.85);
+          ctx.lineCap = 'round'; ctx.strokeStyle = '#0A0E19'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-4, -38); ctx.moveTo(8, 0); ctx.lineTo(4, -38); ctx.stroke();
+          ctx.lineWidth = 16; ctx.strokeStyle = sd < 0 ? P.denim : P.avocado; ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(0, -78); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, -96, 14, 0, TAU); ctx.fillStyle = '#E9C9A0'; ctx.fill(); ctx.lineWidth = 3.5; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
+          ctx.restore();
+          const ax = x0 - sd * 18 * sc, ay = gy - 70 * sc * 0.85;
+          ctx.lineWidth = 5; ctx.strokeStyle = '#0A0E19'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(cx + sd * hx, hy); ctx.stroke();
+          rr(ctx, cx + sd * hx - 5, hy - 9, 10, 18, 3); ctx.fillStyle = P.butter; ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
+        }
+        // العدّاد والأرواح
+        txt(ctx, '⁦' + jumps + '⁩', W / 2, H * 0.12, 46, '#F3EAD8', 700, 'ui-monospace, monospace');
+        txt(ctx, 'نطّة', W / 2, H * 0.12 + 34, 14, 'rgba(243,234,216,.7)', 600);
+        for (let i = 0; i < 3; i++) txt(ctx, i < lives ? '❤' : '♡', W - 24 - i * 24, 26, 20, i < lives ? P.rose : 'rgba(243,234,216,.4)', 700);
+        // مؤشر الإيقاع: الحبل جاي
+        const toBottom = ((TAU - (phase % TAU)) % TAU) / TAU * period;
+        if (!R.done && R.started() && toBottom < 0.35) { ctx.beginPath(); ctx.arc(cx, gy + 14, 6 + (0.35 - toBottom) * 30, 0, TAU); ctx.strokeStyle = `rgba(242,193,78,${(0.35 - toBottom) * 2.5})`; ctx.lineWidth = 3; ctx.stroke(); }
+        if (t - msgT < 0.6 && msg && isNaN(+msg)) txt(ctx, msg, W / 2, H * 0.3, 20, P.rose, 700, TFONT);
+        if (!R.done && R.started() && jumps === 0 && lives === 3) txt(ctx, 'اكبس لتنطّ لما ينزل الحبل لتحت', W / 2, H - 16, 13.5, '#F3EAD8', 600);
+        if (R.done) txt(ctx, lives <= 0 ? 'خلصت الأرواح · ' + jumps + ' نطّة' : jumps + ' نطّة! 🎉', W / 2, H * 0.3, 19, P.butter, 700, TFONT);
+        void passes; void lastPass;
+      });
+      return { destroy() { stop(); S.destroy(); }, forceEnd: fin };
+    }
+  };
+
   // ═══════════════ البيانات الوصفية ═══════════════
   const META = {
     cassette: { name: 'لفّ الكاسيت', year: 1985, how: 'الشريط علق؟ لفّ القلم حول البكرة بالاتجاه المطلوب لحد ما ترجع للأغنية. الأسرع بيربح.', mode: 'الأسرع',
@@ -787,8 +1032,14 @@
       facts: ['شدّ الحبل كانت لعبة الرحلات والأعراس، ودايماً في واحد قوي بيحطّوه بالآخر.', 'كنا نرسم خط بالطبشورة بالنص، واللي بيتعدّى الخط بيخسر.', 'السر مو بالقوة بس، بالشدّة سوا بنفس اللحظة.'] },
     stones: { name: 'السبع حجار', year: 1968, how: 'معك 30 ثانية بس! الحجرة بتتحرك فوق البرج: اكبس لتنزلها فوق اللي قبلها، واللي بيطلع برّا بينقص. اللي بيعمّر أكتر حجار بيربح، وإذا تساووا الأعرض.', mode: 'الأعلى',
       facts: ['السبع حجار: كنا نعمّرها فوق بعض ونضربها بالطابة، وبعدين نرجع نعمّرها قبل ما ينضربنا.', 'كانت الحجار تنلمّ من الطريق، وكل حجرة إلها شكلها.', 'الفريق اللي بيعمّر البرج لازم يركض أسرع من الطابة.'] },
+    hoop: { name: 'الدولاب والعصاية', year: 1960, how: 'اكبس يمين أو شمال الشاشة لتضرب الدولاب بالعصاية: كل ضربة بتسرّعه وبتدفشه لهديك الجهة. لا تخلّيه يبطّئ ويوقع، ولا يطلع برّا الطريق. أبعد مسافة بتربح.', mode: 'الأبعد',
+      facts: ['الدولاب كان طوق حديد من برميل أو من دولاب بسكليت قديم، والعصاية سلك معقوف.', 'ولاد الحارة كانوا يسوقوا الدولاب لمشوار الفرن ويرجعوا، بلا ما يوقع ولا مرة.', 'الشطارة كانت تخلّي الدولاب يلفّ الزاوية بلا ما تمسكه بإيدك.'] },
+    qabban: { name: 'القبّان', year: 1950, how: 'بالكفّة في غرض، وإنت ما بتعرف وزنه. اسحب لتحرّك الثقل على الذراع لحد ما يوقف القبّان مستوي وثابت، وبينتقل للغرض الجاي. 3 أغراض، والأسرع بيربح.', mode: 'الأسرع',
+      facts: ['القبّان كان بكل دكانة وسوق خضرة، وما بدّه كهربا ولا بطاريات.', 'البيّاع الشاطر كان يقرا الوزن من أول نظرة، قبل ما يوقف الذراع.', 'الثقل اللي بيمشي على الذراع كانوا يسمّوه «الرمّانة».'] },
+    jumprope: { name: 'نطّ الحبل', year: 1975, how: 'اتنين عم يلفّوا الحبل، وكل ما نطّيت بيسرع. اكبس لتنطّ لما ينزل الحبل لتحت رجليك. معك 3 أرواح، وأكتر نطّات بتربح.', mode: 'الأكتر',
+      facts: ['نطّ الحبل كان لعبة البنات بساحة المدرسة، ومعها أغاني بتعدّ النطّات.', 'كانوا يجيبوا حبل الغسيل من البيت، ويلفّوه اتنين والباقي يفوتوا واحد ورا التاني.', 'أصعب شي كان «الفوتة»: إنك تفوت عالحبل وهو عم يلفّ بلا ما يعلق.'] },
   };
-  const IMPL = { cassette, antenna, rotary, t9, top, marbles, hat, tug, stones };
+  const IMPL = { cassette, antenna, rotary, t9, top, marbles, hat, tug, stones, hoop, qabban, jumprope };
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   window.ZG = { META, IMPL, mulberry32, beep, buzz };
 })();
