@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: qa3da-zaman
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: ADMIN_KEY
+        generateValue: true
+      # اختياري: إذا ربطت قاعدة Postgres، الإحصائيات بتنحفظ فيها وما بتضيع
+      - key: DATABASE_URL
+        sync: false

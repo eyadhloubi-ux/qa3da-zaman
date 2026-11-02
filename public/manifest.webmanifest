@@ -1,0 +1,18 @@
+{
+  "name": "قعدة زمان",
+  "short_name": "قعدة زمان",
+  "description": "ألعاب من أيام الكاسيت والحارة — إعداد م. إياد حلوبي",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#F1E6D0",
+  "theme_color": "#F1E6D0",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

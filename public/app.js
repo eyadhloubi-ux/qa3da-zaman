@@ -1,0 +1,832 @@
+/* قعدة زمان — واجهة اللعبة
+   إعداد م. إياد حلوبي · @eyad.hloubi · صار بدها قعدة. */
+(function () {
+  'use strict';
+  const IG = 'https://instagram.com/eyad.hloubi';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+  const { META, IMPL, mulberry32, beep, buzz } = window.ZG;
+
+  // ───────── الأيقونات ─────────
+  const I = {
+    cassette: '<svg viewBox="0 0 48 48"><rect x="4" y="11" width="40" height="27" rx="4" fill="var(--c4)" stroke="currentColor" stroke-width="3"/><rect x="12" y="18" width="24" height="10" rx="5" fill="currentColor"/><circle cx="18" cy="23" r="3" fill="var(--paper)"/><circle cx="30" cy="23" r="3" fill="var(--paper)"/><path d="M13 38l3-5h16l3 5" fill="none" stroke="currentColor" stroke-width="3"/></svg>',
+    antenna: '<svg viewBox="0 0 48 48"><path d="M24 22L13 6M24 22L35 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="6" y="20" width="36" height="22" rx="5" fill="var(--c3)" stroke="currentColor" stroke-width="3"/><rect x="11" y="25" width="20" height="12" rx="2" fill="var(--paper)" stroke="currentColor" stroke-width="2"/><circle cx="36" cy="29" r="2" fill="currentColor"/><circle cx="36" cy="35" r="2" fill="currentColor"/></svg>',
+    rotary: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="var(--c1)" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="24" r="6" fill="var(--paper)" stroke="currentColor" stroke-width="2.5"/><g fill="var(--paper)" stroke="currentColor" stroke-width="2"><circle cx="24" cy="10.5" r="3"/><circle cx="34" cy="14.5" r="3"/><circle cx="37.5" cy="24" r="3"/><circle cx="14" cy="14.5" r="3"/><circle cx="10.5" cy="24" r="3"/><circle cx="14" cy="33.5" r="3"/></g></svg>',
+    t9: '<svg viewBox="0 0 48 48"><rect x="12" y="3" width="24" height="42" rx="7" fill="var(--c6)" stroke="currentColor" stroke-width="3"/><rect x="16" y="8" width="16" height="12" rx="2" fill="#B9C9A0" stroke="currentColor" stroke-width="2"/><g fill="currentColor"><circle cx="18" cy="26" r="1.8"/><circle cx="24" cy="26" r="1.8"/><circle cx="30" cy="26" r="1.8"/><circle cx="18" cy="32" r="1.8"/><circle cx="24" cy="32" r="1.8"/><circle cx="30" cy="32" r="1.8"/><circle cx="18" cy="38" r="1.8"/><circle cx="24" cy="38" r="1.8"/><circle cx="30" cy="38" r="1.8"/></g></svg>',
+    top: '<svg viewBox="0 0 48 48"><path d="M24 44C14 30 9 22 10 14h28c1 8-4 16-14 30z" fill="var(--c0)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><ellipse cx="24" cy="14" rx="14" ry="4" fill="var(--c4)" stroke="currentColor" stroke-width="3"/><path d="M24 10V4" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><path d="M17 20l3 12M28 20l-2 12" stroke="currentColor" stroke-width="2" opacity=".5"/></svg>',
+    marbles: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="38" rx="17" ry="5" fill="currentColor" opacity=".2"/><circle cx="17" cy="24" r="10" fill="var(--c1)" stroke="currentColor" stroke-width="3"/><circle cx="34" cy="28" r="7" fill="var(--c2)" stroke="currentColor" stroke-width="3"/><circle cx="14" cy="20" r="2.5" fill="#fff"/><circle cx="32" cy="25" r="1.8" fill="#fff"/></svg>',
+    hat: '<svg viewBox="0 0 48 48"><path d="M8 33c0-11 7-20 16-20s16 9 16 20z" fill="var(--c2)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M4 33h40v5H4z" fill="var(--c4)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="11" r="3.5" fill="var(--c4)" stroke="currentColor" stroke-width="2.5"/></svg>',
+    hatCap: '<svg viewBox="0 0 48 48"><path d="M8 33c0-11 7-20 16-20s16 9 16 20z" fill="var(--c2)" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><path d="M4 33h40v5H4z" fill="var(--c4)" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="11" r="3.5" fill="var(--c4)" stroke="#0A0E19" stroke-width="2.5"/></svg>',
+    tug: '<svg viewBox="0 0 48 48"><path d="M3 26c7-3 13 3 21 0s14-3 21 0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M3 26c7-3 13 3 21 0s14-3 21 0" fill="none" stroke="var(--c4)" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="21" y="18" width="6" height="14" rx="2" fill="var(--c0)" stroke="currentColor" stroke-width="2.5"/><path d="M24 8v6M24 36v6" stroke="currentColor" stroke-width="2.5" stroke-dasharray="2 3"/></svg>',
+    stones: '<svg viewBox="0 0 48 48"><rect x="8" y="37" width="32" height="7" rx="3.5" fill="#A39A88" stroke="currentColor" stroke-width="2.5"/><rect x="11" y="29" width="27" height="7" rx="3.5" fill="#B9AF9B" stroke="currentColor" stroke-width="2.5"/><rect x="13" y="21" width="22" height="7" rx="3.5" fill="#8E8676" stroke="currentColor" stroke-width="2.5"/><rect x="16" y="13" width="17" height="7" rx="3.5" fill="#B0A48E" stroke="currentColor" stroke-width="2.5"/><rect x="19" y="5" width="11" height="7" rx="3.5" fill="#9A8F7C" stroke="currentColor" stroke-width="2.5"/></svg>',
+    help: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4.3 2.6c-1 .6-1.5 1.1-1.5 2.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>',
+    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>',
+    crown: '<svg viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="var(--c4)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    cam: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
+    img: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>',
+    tv: '<svg viewBox="0 0 24 24"><path d="M8 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="7" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
+    share: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  const GAME_ORDER = ['cassette', 'antenna', 'rotary', 't9', 'top', 'marbles', 'hat', 'tug', 'stones'];
+
+  // ───────── الحالة ─────────
+  let pid = LS.get('zaman_pid'); if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); LS.set('zaman_pid', pid); }
+  let code = null, S = null, ws = null, offset = 0, photos = {}, groupPhoto = null, connected = false, wantProfile = false, editingProfile = false;
+  const params = new URLSearchParams(location.search);
+  if (params.get('r')) code = params.get('r').toUpperCase(); else code = LS.get('zaman_room');
+  const now = () => Date.now() + offset;
+  const me = () => S && S.players[pid];
+  const isHost = () => S && S.hostId === pid;
+  const gend = (id, m, f) => (S && S.players[id] && S.players[id].gender === 'f') ? f : m;
+  const myG = (m, f) => gend(pid, m, f);
+  const nameOf = id => (S && S.players[id] && S.players[id].name) || 'لاعب بلا اسم';
+  const teamName = i => (S && S.teams[i] && S.teams[i].name) || '';
+  const isTeam = () => S && S.settings.mode !== 'solo';
+
+  // ───────── الثيم ─────────
+  function setTheme(t) { document.documentElement.dataset.theme = t; LS.set('zaman_theme', t); const b = $('#themeBtn'); if (b) b.innerHTML = t === 'dark' ? I.sun : I.moon; const m = $('meta[name=theme-color]'); if (m) m.content = t === 'dark' ? '#141A2B' : '#F1E6D0'; }
+  setTheme(LS.get('zaman_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+  // ───────── الاتصال ─────────
+  let retry = 0, pingT;
+  function connect() {
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+    ws.onopen = () => {
+      connected = true; retry = 0; netBadge();
+      for (let i = 0; i < 3; i++) setTimeout(() => sendRaw({ t: 'ping', c: Date.now() }), i * 300);
+      clearInterval(pingT); pingT = setInterval(() => sendRaw({ t: 'ping', c: Date.now() }), 20000);
+      if (code) sendRaw({ t: 'join', code, pid, hostKey: LS.get('zaman_hk_' + code) });
+      else render();
+    };
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } onMsg(m); };
+    ws.onclose = () => { connected = false; netBadge(); setTimeout(connect, Math.min(5000, 600 * (++retry))); };
+  }
+  let bestRtt = 1e9;
+  function sendRaw(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
+  function send(m) { sendRaw(m); }
+  function host(a, extra) { send(Object.assign({ t: 'host', a }, extra || {})); }
+  function onMsg(m) {
+    if (m.t === 'pong') { const rtt = Date.now() - m.c; if (rtt <= bestRtt + 30) { bestRtt = Math.min(bestRtt, rtt); offset = m.s - (m.c + rtt / 2); } return; }
+    if (m.t === 'created') { code = m.code; LS.set('zaman_hk_' + code, m.hostKey); LS.set('zaman_room', code); history.replaceState(null, '', '/?r=' + code); sendRaw({ t: 'join', code, pid, hostKey: m.hostKey }); return; }
+    if (m.t === 'joined') { LS.set('zaman_room', code); if (location.search.indexOf('r=') < 0) history.replaceState(null, '', '/?r=' + code); return; }
+    if (m.t === 'state') { const prev = S; S = m.s; if (!prev || Math.abs(S.now - Date.now() - offset) > 1500 && bestRtt > 1e8) offset = S.now - Date.now(); render(prev); return; }
+    if (m.t === 'photos') { photos = m.map || {}; groupPhoto = m.group; refreshPhotos(); return; }
+    if (m.t === 'kicked') { leaveRoom(); showScreen(kickedScreen()); return; }
+    if (m.t === 'error') {
+      if (m.e === 'noroom' || m.e === 'closed') { toast(m.e === 'closed' ? 'انسكّرت القعدة' : 'الكود غلط أو القعدة خلصت'); leaveRoom(); render(); }
+      return;
+    }
+  }
+  function leaveRoom() { code = null; S = null; LS.del('zaman_room'); history.replaceState(null, '', '/'); }
+  function netBadge() { const b = $('#net'); if (!b) return; b.hidden = connected; }
+
+  // ───────── أدوات الواجهة ─────────
+  function toast(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.classList.add('on'), 10); setTimeout(() => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); }, 2300); }
+  function avatar(id, size = 40) {
+    const p = S && S.players[id]; const col = p ? `var(--c${p.color})` : 'var(--c0)';
+    const src = photos[id];
+    const inner = src ? `<img src="${src}" alt="">` : `<b>${esc(initials(p && p.name))}</b>`;
+    return `<span class="av" data-av="${esc(id)}" style="--pc:${col};width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px">${inner}</span>`;
+  }
+  function initials(n) { n = (n || '').trim(); if (!n) return '؟'; return /^[اأإآ]/.test(n) ? n.slice(0, 2) : n.slice(0, 1); }
+  function refreshPhotos() { $$('[data-av]').forEach(el => { const id = el.dataset.av; if (photos[id]) el.innerHTML = `<img src="${photos[id]}" alt="">`; }); $$('[data-group]').forEach(el => { el.innerHTML = groupPhoto ? `<img src="${groupPhoto}" alt="">` : el.dataset.empty || ''; }); }
+  function sheet(html, onMount) {
+    const w = document.createElement('div'); w.className = 'sheet-wrap';
+    w.innerHTML = `<div class="sheet" role="dialog"><button class="x" aria-label="سكّر">✕</button>${html}</div>`;
+    document.body.appendChild(w); requestAnimationFrame(() => w.classList.add('on'));
+    const close = () => { w.classList.remove('on'); setTimeout(() => w.remove(), 250); };
+    w.addEventListener('pointerdown', e => { if (e.target === w) close(); });
+    $('.x', w).onclick = close;
+    if (onMount) onMount($('.sheet', w), close);
+    return close;
+  }
+  function confirmBox(text, yes, cb) { sheet(`<h3>${text}</h3><div class="row2"><button class="btn ghost" data-n>لا</button><button class="btn red" data-y>${yes}</button></div>`, (el, close) => { $('[data-n]', el).onclick = close; $('[data-y]', el).onclick = () => { close(); cb(); }; }); }
+  function confetti(n = 120) {
+    const c = document.createElement('canvas'); c.className = 'confetti'; document.body.appendChild(c);
+    const x = c.getContext('2d'); const W = c.width = innerWidth, H = c.height = innerHeight;
+    const cols = ['--c0', '--c1', '--c2', '--c3', '--c4', '--c5'].map(v => getComputedStyle(document.documentElement).getPropertyValue(v));
+    const P = Array.from({ length: n }, () => ({ x: W / 2 + (Math.random() - 0.5) * W * 0.3, y: H * 0.35, vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 16 - 4, r: Math.random() * 6.28, s: 6 + Math.random() * 8, c: cols[Math.floor(Math.random() * cols.length)] }));
+    let t = 0; (function f() { t++; x.clearRect(0, 0, W, H); for (const p of P) { p.vy += 0.42; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.r += 0.15; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); } if (t < 200) requestAnimationFrame(f); else c.remove(); })();
+  }
+
+  // ───────── إدارة الشاشات ─────────
+  let screen = null;
+  function showScreen(sc) {
+    if (screen && screen.destroy) screen.destroy();
+    screen = sc; updateTopbar(); const root = $('#app'); root.innerHTML = ''; root.appendChild(sc.el);
+    root.scrollTop = 0; window.scrollTo(0, 0);
+    if (sc.mounted) sc.mounted();
+  }
+  function el(html) { const d = document.createElement('div'); d.className = 'screen'; d.innerHTML = html; return d; }
+
+  let wheelAnimKey = null, finalAnimDone = false;
+  function render(prev) {
+    netBadge(); updateTopbar();
+    if (!code) { if (!screen || screen.key !== 'home') showScreen(homeScreen()); return; }
+    if (!S) { if (!screen || screen.key !== 'loading') showScreen({ key: 'loading', el: el('<div class="center-msg"><div class="tv-mini">' + I.tv + '</div><p>عم نوصل للقعدة…</p></div>') }); return; }
+    if (!me() || wantProfile) { if (!screen || screen.key !== 'profile') showScreen(profileScreen()); return; }
+    let key = S.phase;
+    const c = S.cur;
+    if (S.phase === 'intro' && prev && prev.phase === 'wheel' && c && wheelAnimKey !== c.n + ':' + c.seed) {
+      wheelAnimKey = c.n + ':' + c.seed;
+      if (screen && screen.key && screen.key.startsWith('wheel')) { screen.spinTo(c.game, () => { if (S.phase === 'intro') { screen = null; render(); } }); return; }
+    }
+    if (screen && screen.spinning) return;
+    if (S.phase === 'final' && prev && prev.phase === 'reveal' && prev.revealMode === 'party' && !finalAnimDone) {
+      finalAnimDone = true; showScreen(drumrollScreen(() => { screen = null; render(); })); return;
+    }
+    if (screen && screen.drum) return;
+    if (S.phase === 'wheel') key = 'wheel:' + (c && c.n) + ':' + (c && c.seed);
+    else if (S.phase === 'intro') key = 'intro:' + c.n + ':' + c.seed;
+    else if (S.phase === 'play') key = 'play:' + c.n + ':' + c.seed;
+    else if (S.phase === 'result') key = 'result:' + c.n + ':' + c.seed;
+    if (S.phase !== 'final' && S.phase !== 'reveal') finalAnimDone = false;
+    if (!screen || screen.key !== key) {
+      const mk = { lobby: lobbyScreen, wheel: wheelScreen, intro: introScreen, play: playScreen, result: resultScreen, reveal: revealScreen, final: finalScreen }[S.phase];
+      if (mk) showScreen(mk(key));
+    } else if (screen.update) screen.update(prev);
+    hostAwayBanner();
+  }
+
+  // ───────── الشريط العلوي ─────────
+  function updateTopbar() {
+    const t = $('#topTitle'); if (!t) return;
+    const inRoom = !!(code && S && me());
+    t.innerHTML = inRoom ? `قعدة زمان <span class="code-chip">${esc(S.code)}</span>${isHost() ? ' <span class="host-chip">' + I.crown + ' ' + myG('الريس', 'الريسة') + '</span>' : ''}` : 'قعدة زمان';
+  }
+  function hostAwayBanner() {
+    let b = $('#hostAway');
+    const show = S && S.hostAway && S.hostId !== pid && me();
+    if (!show) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('div'); b.id = 'hostAway'; b.className = 'banner'; document.body.appendChild(b); }
+    const left = Math.ceil((45000 - (now() - S.hostLeftAt)) / 1000);
+    if (left > 0) { b.innerHTML = `${esc(gend(S.hostId, 'الريس طلع', 'الريسة طلعت'))}… ناطرين يرجع (${left} ث)`; clearTimeout(b._t); b._t = setTimeout(hostAwayBanner, 1000); }
+    else { b.innerHTML = `${esc(gend(S.hostId, 'الريس ما رجع', 'الريسة ما رجعت'))} <button class="btn sm">${myG('خليني أنا الريس', 'خليني أنا الريسة')}</button>`; $('button', b).onclick = () => send({ t: 'claimHost' }); }
+  }
+
+  // ═════════════ الغلاف ═════════════
+  function homeScreen() {
+    const e = el(`
+      <section class="cover">
+        <div class="cover-tv">
+          <div class="ant"><i></i><i></i></div>
+          <div class="tv-body"><div class="tv-screen"><canvas class="static"></canvas><div class="tv-ch"></div></div><div class="tv-knobs"><i></i><i></i></div></div>
+        </div>
+        <h1 class="title">قعدة زمان</h1>
+        <p class="sub">ألعاب من أيام الكاسيت والحارة</p>
+        <div class="ticker"><div>${('<span>رجّع الشريط بالقلم · ظبّط الأنتين · دوّر الرقم عالدولاب · اكتب رسالة بالأزرار · لفّ البلبل · ارمي الكلّة · طاق طاق طاقية · شدّ الحبل · عمّر السبع حجار ·</span>').repeat(2)}</div></div>
+        <div class="cover-actions">
+          <button class="btn big" id="newBtn">افتح قعدة جديدة</button>
+          <div class="join-row"><input id="codeIn" maxlength="5" placeholder="الكود" autocomplete="off" dir="ltr" inputmode="text"><button class="btn ghost" id="joinBtn">فوت</button></div>
+        </div>
+        <p class="sig">إعداد م. إياد حلوبي</p>
+      </section>`);
+    const sc = { key: 'home', el: e };
+    sc.mounted = () => {
+      $('#newBtn', e).onclick = () => { if (!connected) return toast('عم نتصل… جرّب كمان شوي'); sendRaw({ t: 'create', pid }); };
+      const go = () => { const v = $('#codeIn', e).value.trim().toUpperCase(); if (v.length !== 5) return toast('الكود 5 أحرف'); code = v; S = null; sendRaw({ t: 'join', code, pid }); render(); };
+      $('#joinBtn', e).onclick = go; $('#codeIn', e).addEventListener('keydown', ev => { if (ev.key === 'Enter') go(); });
+      // التلفزيون: تشويش وقنوات
+      const cv = $('.static', e), cx = cv.getContext('2d'); cv.width = 80; cv.height = 60; const img = cx.createImageData(80, 60);
+      const chEl = $('.tv-ch', e); let k = 0, staticOn = true;
+      const show = () => { staticOn = false; chEl.innerHTML = I[GAME_ORDER[k % 9]]; chEl.classList.add('on'); k++; setTimeout(() => { chEl.classList.remove('on'); staticOn = true; }, 1700); };
+      let raf; const f = () => { if (staticOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 200; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
+      const iv = setInterval(show, 2300); setTimeout(show, 500);
+      sc.destroy = () => { cancelAnimationFrame(raf); clearInterval(iv); };
+    };
+    return sc;
+  }
+  function kickedScreen() { const e = el(`<div class="center-msg"><div class="big-ic">${I.hat}</div><h2>طلعت من القعدة</h2><p>الريس طلّعك من هالقعدة.</p><button class="btn" id="h">رجوع للبداية</button></div>`); $('#h', e).onclick = () => { screen = null; render(); }; return { key: 'kicked', el: e }; }
+
+  // ═════════════ الدخول (الاسم والصورة) ═════════════
+  function profileScreen() {
+    const p = me(); const editing = !!p;
+    let photo = editing ? (photos[pid] || null) : null, gender = editing ? p.gender : null, gen = editing ? p.gen : null;
+    let name = editing ? p.name : '';
+    const fam = S.settings.family;
+    const e = el(`
+      <section class="card prof">
+        <h2>${editing ? 'عدّل معلوماتك' : 'فوت عالقعدة'}</h2>
+        <p class="hint">${isHost() && !editing ? 'إنت فاتح القعدة، يعني إنت الريس.' : 'الاسم والصورة اختياريين.'}</p>
+        <div class="ph-pick"><div class="ph-prev">${photo ? `<img src="${photo}">` : I.cam}</div>
+          <div class="ph-btns"><button class="btn ghost sm" id="gal">${I.img} من الصور</button><button class="btn ghost sm" id="sel">${I.cam} التقط سيلفي</button>${photo ? '<button class="link" id="rm">شيل الصورة</button>' : ''}</div></div>
+        <label class="fld"><span>الاسم</span><input id="nm" maxlength="20" placeholder="شو بينادوك بالقعدة؟" value="${esc(name)}"></label>
+        <div class="fld"><span>إنت؟ <em>(إجباري)</em></span><div class="seg" id="gd"><button data-v="m">شب</button><button data-v="f">صبية</button></div></div>
+        ${fam ? `<div class="fld"><span>من أي جيل؟ <em>(إجباري)</em></span><div class="seg" id="gn"><button data-v="old">جيل الكاسيت</button><button data-v="new">جيل الموبايل</button></div></div>` : ''}
+        <button class="btn big" id="ok">${editing ? 'حفظ' : 'يلا فوت'}</button>
+        ${editing ? '<button class="link" id="cancel">رجوع</button>' : ''}
+        <input type="file" accept="image/*" id="file" hidden>
+      </section>`);
+    const sc = { key: 'profile', el: e };
+    const paint = () => {
+      $$('#gd button', e).forEach(b => b.classList.toggle('on', b.dataset.v === gender));
+      $$('#gn button', e).forEach(b => b.classList.toggle('on', b.dataset.v === gen));
+      $('.ph-prev', e).innerHTML = photo ? `<img src="${photo}">` : I.cam;
+    };
+    sc.mounted = () => {
+      paint();
+      $$('#gd button', e).forEach(b => b.onclick = () => { gender = b.dataset.v; paint(); });
+      $$('#gn button', e).forEach(b => b.onclick = () => { gen = b.dataset.v; paint(); });
+      $('#gal', e).onclick = () => $('#file', e).click();
+      $('#file', e).onchange = ev => { const f = ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => cropper(r.result, 1, 320, out => { photo = out; paint(); }); r.readAsDataURL(f); ev.target.value = ''; };
+      $('#sel', e).onclick = () => selfie(false, src => cropper(src, 1, 320, out => { photo = out; paint(); }));
+      const rm = $('#rm', e); if (rm) rm.onclick = () => { photo = null; paint(); rm.remove(); };
+      const cancel = $('#cancel', e); if (cancel) cancel.onclick = () => { wantProfile = false; screen = null; render(); };
+      $('#ok', e).onclick = () => {
+        if (!gender) return toast('اختار شب أو صبية');
+        if (fam && !gen) return toast('اختار جيلك');
+        const m = { t: 'profile', name: $('#nm', e).value.trim(), gender, gen: fam ? gen : null };
+        if (!editing || photo !== (photos[pid] || null)) m.photo = photo;
+        send(m); wantProfile = false; screen = null;
+        setTimeout(render, 50);
+      };
+    };
+    return sc;
+  }
+
+  // ═════════════ غرفة الانتظار ═════════════
+  function lobbyScreen(key) {
+    const e = el(`<section class="lobby"><div class="ticket"><div class="t-qr"><img alt="QR" src="/qr/${esc(S.code)}.svg"></div><div class="t-info"><small>كود القعدة</small><div class="t-code" dir="ltr">${esc(S.code)}</div><button class="btn ghost sm" id="shareLink">${I.share} ابعت الرابط</button></div></div>
+      <div id="sess"></div><div id="hostSet"></div><div id="players"></div><div id="startBox"></div></section>`);
+    const sc = { key, el: e };
+    function renderSess() {
+      const box = $('#sess', e); const s = S.settings;
+      if (isHost()) {
+        if (box.querySelector('input:focus')) return;
+        const types = ['شلة', 'رفقة', 'عيلة', 'شغل'];
+        const custom = !types.includes(s.sessionType);
+        box.innerHTML = `<div class="card"><label class="fld"><span>اسم القعدة <em>(إجباري)</em></span><input id="sn" maxlength="30" placeholder="مثلاً: سهرة الخميس" value="${esc(s.sessionName)}"></label>
+          <div class="fld"><span>نوع القعدة</span><div class="chips">${types.map(t => `<button data-t="${t}" class="${s.sessionType === t ? 'on' : ''}">${t}</button>`).join('')}<button data-t="__" class="${custom ? 'on' : ''}">غير شي</button></div>${custom ? `<input id="st" maxlength="20" placeholder="اكتبوه إنتو" value="${esc(s.sessionType)}">` : ''}</div>
+          <div class="gp-row"><div class="gp" data-group data-empty="${esc(I.cam)}">${groupPhoto ? `<img src="${groupPhoto}">` : I.cam}</div><div><b>الصورة الجماعية</b><small>اختيارية، بتطلع بالنتيجة</small><div class="row2 sm"><button class="btn ghost sm" id="gpSel">${I.cam} سيلفي بمؤقت</button><button class="btn ghost sm" id="gpGal">${I.img} من الصور</button></div></div></div><input type="file" accept="image/*" id="gpFile" hidden></div>`;
+        $('#sn', box).addEventListener('change', ev => host('settings', { v: { sessionName: ev.target.value.trim() } }));
+        $('#sn', box).addEventListener('input', ev => { clearTimeout(sc._sn); sc._sn = setTimeout(() => host('settings', { v: { sessionName: ev.target.value.trim() } }), 500); });
+        $$('.chips button', box).forEach(b => b.onclick = () => { host('settings', { v: { sessionType: b.dataset.t === '__' ? 'غير شي' : b.dataset.t } }); });
+        const st = $('#st', box); if (st) st.addEventListener('change', ev => host('settings', { v: { sessionType: ev.target.value.trim() || 'غير شي' } }));
+        bindGroupPhoto(box);
+      } else {
+        box.innerHTML = s.sessionName ? `<div class="sess-name"><small>${esc(s.sessionType)}</small><b>${esc(s.sessionName)}</b></div>` : '';
+      }
+    }
+    function renderHostSet() {
+      const box = $('#hostSet', e); const s = S.settings;
+      if (!isHost()) { box.innerHTML = `<div class="card mode-info"><b>${{ solo: 'فردي: كل واحد لحالو', team: 'فرق: الفريق كله بيلعب', relay: 'فرق: كل جولة عضو من كل فريق' }[s.mode]}</b><small>${s.gameCount} ألعاب${s.family ? ' · وضع العيلة' : ''}</small></div>`; return; }
+      box.innerHTML = `<div class="card"><div class="fld"><span>طريقة اللعب</span><div class="seg three" id="md"><button data-v="solo">فردي</button><button data-v="team">الفريق كله</button><button data-v="relay">عضو كل جولة</button></div></div>
+        ${s.mode !== 'solo' ? `<div class="fld"><span>عدد الفرق</span><div class="seg" id="tc">${[2, 3, 4].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>` : ''}
+        <div class="fld"><span>كم لعبة؟</span><div class="seg" id="gc">${[3, 5, 7, 9].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>
+        <div class="fld"><span>كشف النتيجة</span><div class="seg" id="rv"><button data-v="now">بعد كل لعبة</button><button data-v="end">بالآخر</button></div></div>
+        <label class="tgl"><input type="checkbox" id="fm" ${s.family ? 'checked' : ''}><span></span><div><b>وضع العيلة</b><small>جيل الكاسيت ضد جيل الموبايل</small></div></label></div>`;
+      const mark = (id, v) => $$(`#${id} button`, box).forEach(b => b.classList.toggle('on', b.dataset.v === String(v)));
+      mark('md', s.mode); mark('tc', s.teamCount); mark('gc', s.gameCount); mark('rv', s.reveal);
+      $$('#md button', box).forEach(b => b.onclick = () => host('settings', { v: { mode: b.dataset.v } }));
+      $$('#tc button', box).forEach(b => b.onclick = () => host('settings', { v: { teamCount: +b.dataset.v } }));
+      $$('#gc button', box).forEach(b => b.onclick = () => host('settings', { v: { gameCount: +b.dataset.v } }));
+      $$('#rv button', box).forEach(b => b.onclick = () => host('settings', { v: { reveal: b.dataset.v } }));
+      $('#fm', box).onchange = ev => host('settings', { v: { family: ev.target.checked } });
+    }
+    function chip(id) {
+      const p = S.players[id]; const lead = isTeam() && S.teams.some(t => t.leader === id);
+      return `<button class="pchip ${p.connected ? '' : 'off'} ${id === pid ? 'me' : ''}" data-id="${esc(id)}" style="--pc:var(--c${p.color})">${avatar(id, 34)}<span>${esc(nameOf(id))}${id === pid ? ' <em>(إنت)</em>' : ''}</span>${S.hostId === id ? `<i class="ic">${I.crown}</i>` : ''}${lead ? '<i class="lead">قائد</i>' : ''}${S.settings.family && p.gen ? `<i class="gen">${p.gen === 'old' ? '📼' : '📱'}</i>` : ''}</button>`;
+    }
+    function renderPlayers() {
+      const box = $('#players', e); const ids = S.order.filter(id => S.players[id] && !S.players[id].kicked);
+      if (!isTeam()) box.innerHTML = `<div class="card"><div class="ph"><b>اللي بالقعدة (${ids.length})</b><button class="link" id="editMe">عدّل معلوماتي</button></div><div class="pgrid">${ids.map(chip).join('')}</div></div>`;
+      else {
+        box.innerHTML = `<div class="ph out"><b>الفرق (${ids.length} لاعب)</b><span>${isHost() ? '<button class="link" id="shuf">فرز عشوائي</button> · ' : ''}<button class="link" id="editMe">عدّل معلوماتي</button></span></div><div class="teams">${S.teams.map(t => `
+          <div class="team" style="--pc:var(--tc${t.i})"><div class="team-h"><b class="tn" data-i="${t.i}">${esc(t.name)}</b>${isHost() ? '<button class="link sm tn-ed" data-i="' + t.i + '">✎</button>' : ''}</div>
+          <div class="pgrid">${t.members.map(chip).join('') || '<small class="empty">لسّا ما في حدا</small>'}</div>
+          ${me().team !== t.i ? `<button class="btn ghost sm jn" data-i="${t.i}">انضم لهون</button>` : '<small class="here">إنت بهالفريق</small>'}</div>`).join('')}</div>`;
+        $$('.jn', box).forEach(b => b.onclick = () => send({ t: 'profile', team: +b.dataset.i }));
+        $$('.tn-ed', box).forEach(b => b.onclick = () => { const i = +b.dataset.i; sheet(`<h3>اسم الفريق</h3><input id="tnIn" maxlength="24" value="${esc(teamName(i))}"><button class="btn" id="tnOk">حفظ</button>`, (s, close) => { $('#tnOk', s).onclick = () => { host('teamName', { i, name: $('#tnIn', s).value.trim() }); close(); }; }); });
+        const sh = $('#shuf', box); if (sh) sh.onclick = () => host('shuffleTeams');
+      }
+      $('#editMe', box).onclick = () => { wantProfile = true; screen = null; render(); };
+      $$('.pchip', box).forEach(b => b.onclick = () => playerMenu(b.dataset.id));
+    }
+    function renderStart() {
+      const box = $('#startBox', e); const ids = S.order.filter(id => S.players[id] && !S.players[id].kicked);
+      if (!isHost()) { box.innerHTML = `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ناطرين ${esc(gend(S.hostId, 'الريس', 'الريسة'))} ${esc(nameOf(S.hostId))} يبلّش</div>`; return; }
+      let why = '';
+      if (ids.length < 2) why = 'لازم يكون في لاعبين اتنين عالأقل';
+      else if (!S.settings.sessionName.trim()) why = 'اكتب اسم القعدة فوق';
+      else if (isTeam() && S.teams.filter(t => t.members.length).length < 2) why = 'لازم فريقين فيهن ناس عالأقل';
+      box.innerHTML = `<button class="btn big" id="start" ${why ? 'disabled' : ''}>يلا نبلّش</button>${why ? `<p class="why">${why}</p>` : ''}`;
+      const b = $('#start', box); if (b) b.onclick = () => host('start');
+    }
+    sc.update = () => { renderSess(); renderHostSet(); renderPlayers(); renderStart(); };
+    sc.mounted = () => {
+      sc.update();
+      $('#shareLink', e).onclick = async () => { const url = location.origin + '/?r=' + S.code; try { if (navigator.share) await navigator.share({ title: 'قعدة زمان', text: 'فوت عالقعدة: ' + S.code, url }); else { await navigator.clipboard.writeText(url); toast('انسخ الرابط'); } } catch (x) {} };
+    };
+    return sc;
+  }
+  function bindGroupPhoto(box) {
+    const set = src => cropper(src, 4 / 3, 720, out => host('groupPhoto', { photo: out }));
+    const a = $('#gpSel', box), b = $('#gpGal', box), f = $('#gpFile', box);
+    if (a) a.onclick = () => selfie(true, set);
+    if (b) b.onclick = () => f.click();
+    if (f) f.onchange = ev => { const x = ev.target.files[0]; if (!x) return; const r = new FileReader(); r.onload = () => set(r.result); r.readAsDataURL(x); ev.target.value = ''; };
+  }
+  function playerMenu(id) {
+    if (!isHost()) { if (id === pid) { wantProfile = true; screen = null; render(); } return; }
+    const p = S.players[id]; if (!p) return;
+    const inLobby = S.phase === 'lobby';
+    sheet(`<div class="pm-head">${avatar(id, 54)}<div><b>${esc(nameOf(id))}</b><small>${p.connected ? 'متصل' : 'مو متصل'}</small></div></div>
+      <label class="fld"><span>عدّل الاسم</span><div class="row2"><input id="rn" maxlength="20" value="${esc(p.name)}"><button class="btn sm" id="rnOk">حفظ</button></div></label>
+      ${isTeam() ? `<button class="btn ghost" id="ld">${I.crown} ${gend(id, 'خليه قائد الفريق', 'خليها قائدة الفريق')}</button>` : ''}
+      ${isTeam() && inLobby ? `<div class="fld"><span>انقله لفريق</span><div class="chips">${S.teams.map(t => `<button data-t="${t.i}" class="${p.team === t.i ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div></div>` : ''}
+      ${id !== pid ? `<button class="btn ghost" id="mh">سلّم ${gend(id, 'الريسة لإله', 'الريسة لإلها')}</button><button class="btn red" id="kk">${gend(id, 'طلّعه من القعدة', 'طلّعها من القعدة')}</button>` : ''}`, (s, close) => {
+      $('#rnOk', s).onclick = () => { host('rename', { id, name: $('#rn', s).value.trim() }); close(); };
+      const ld = $('#ld', s); if (ld) ld.onclick = () => { host('leader', { id }); close(); };
+      $$('.chips button', s).forEach(b => b.onclick = () => { host('moveTeam', { id, team: +b.dataset.t }); close(); });
+      const mh = $('#mh', s); if (mh) mh.onclick = () => { if (!p.connected) return toast('لازم يكون متصل'); host('makeHost', { id }); close(); };
+      const kk = $('#kk', s); if (kk) kk.onclick = () => { close(); confirmBox(`أكيد بدك تطلّع ${esc(nameOf(id))}؟ ما رح يقدر يرجع.`, 'طلّع', () => host('kick', { id })); };
+    });
+  }
+
+  // ═════════════ دولاب القنوات ═════════════
+  function wheelScreen(key) {
+    const c = S.cur; const played = S.rounds.length; const total = played + S.pool.length;
+    const e = el(`<section class="wheel-sc"><p class="step">اللعبة ${played + 1} من ${total}</p>
+      <div class="dial-wrap"><div class="dial"><div class="dial-ring">${GAME_ORDER.map((g, i) => { const a = i * 40; const live = S.pool.includes(g); return `<span class="dch ${live ? '' : 'dim'}" data-g="${g}" style="transform:rotate(${a}deg) translateY(-38cqw) rotate(${-a}deg)">${I[g]}</span>`; }).join('')}</div>
+      <div class="knob"><i class="pointer"></i><b>قناة</b></div></div><div class="dial-tv"><div class="tv-screen small"><canvas class="static"></canvas><div class="tv-ch"></div></div></div></div>
+      <div id="wctl"></div></section>`);
+    const sc = { key, el: e };
+    let rot = 0;
+    const cv = $('.static', e), cx = cv.getContext('2d'); cv.width = 64; cv.height = 48; const img = cx.createImageData(64, 48);
+    let raf, staticOn = true;
+    const f = () => { if (staticOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 190; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
+    function ctl() {
+      const box = $('#wctl', e);
+      if (isHost()) box.innerHTML = `<button class="btn big" id="spin">لفّ الدولاب</button>${played ? '<button class="link" id="fin">خلصنا، ورجينا النتيجة</button>' : ''}`;
+      else box.innerHTML = `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ${esc(gend(S.hostId, 'الريس عم يلفّ الدولاب', 'الريسة عم تلفّ الدولاب'))}</div>`;
+      const sp = $('#spin', box); if (sp) sp.onclick = () => { sp.disabled = true; host('spin'); };
+      const fn = $('#fin', box); if (fn) fn.onclick = () => confirmBox('بدك تخلّصوا هون وتشوفوا النتيجة؟', 'إي خلصنا', () => host('finish'));
+    }
+    sc.mounted = ctl; sc.update = ctl;
+    sc.spinTo = (g, done) => {
+      sc.spinning = true; $('#wctl', e).innerHTML = '<div class="wait">عم يدور… 📺</div>';
+      const idx = GAME_ORDER.indexOf(g); const target = 360 * 4 + (360 - idx * 40);
+      const knob = $('.knob', e); const t0 = performance.now(), dur = 2600;
+      let lastTick = 0;
+      const anim = t => {
+        const k = Math.min(1, (t - t0) / dur); const ease = 1 - Math.pow(1 - k, 3); rot = target * ease;
+        knob.style.transform = `rotate(${rot}deg)`;
+        const cur = Math.round(rot / 40); if (cur !== lastTick) { lastTick = cur; beep(900, 0.015, 'square', 0.02); }
+        $$('.dch', e).forEach((d, i) => d.classList.toggle('hit', ((Math.round(-rot / 40) % 9) + 9) % 9 === i && false));
+        if (k < 1) requestAnimationFrame(anim);
+        else {
+          $$('.dch', e).forEach(d => d.classList.toggle('hit', d.dataset.g === g));
+          staticOn = false; const ch = $('.tv-ch', e); ch.innerHTML = I[g]; ch.classList.add('on'); beep(660, 0.12, 'triangle', 0.05); buzz(30);
+          setTimeout(() => { sc.spinning = false; done(); }, 900);
+        }
+      };
+      requestAnimationFrame(anim);
+    };
+    sc.destroy = () => cancelAnimationFrame(raf);
+    return sc;
+  }
+
+  // ═════════════ تقديم اللعبة ═════════════
+  function relayActive() {
+    if (S.settings.mode !== 'relay') return null;
+    return S.teams.filter(t => t.members.length).map(t => t.members[((S.relayIdx || {})[t.i] || 0) % t.members.length]);
+  }
+  function factOf(g, seed) { const f = META[g].facts; return f[seed % f.length]; }
+  function introScreen(key) {
+    const c = S.cur, M = META[c.game];
+    const e = el(`<section class="intro"><div class="tvcard"><div class="tv-head"><span>قناة ${c.n}</span><span dir="ltr">${M.year}</span></div><div class="g-ic">${I[c.game]}</div><h2>${M.name}</h2><p class="how">${M.how}</p><span class="tag">${M.mode} بيربح</span></div>
+      <div id="who"></div><div id="bet"></div><div id="ictl"></div></section>`);
+    const sc = { key, el: e };
+    function upd() {
+      const c = S.cur; if (!c) return;
+      const rel = relayActive();
+      const who = $('#who', e);
+      if (rel) who.innerHTML = `<div class="card who"><b>مين بيلعب هالجولة؟</b><div class="pgrid">${rel.map(id => `<span class="pchip" style="--pc:var(--c${S.players[id].color})">${avatar(id, 30)}<span>${esc(nameOf(id))}</span><i class="tchip" style="background:var(--tc${S.players[id].team})"></i></span>`).join('')}</div></div>`;
+      else who.innerHTML = '';
+      // الرهان
+      const bet = $('#bet', e); const b = c.bet;
+      const myTeam = me().team; const leaderOf = isTeam() ? S.teams.find(t => t.leader === pid) : null;
+      if (!isTeam()) bet.innerHTML = '';
+      else if (b && b.status === 'wait') {
+        const need = leaderOf && b.need.includes(leaderOf.i) && !b.ok[leaderOf.i];
+        bet.innerHTML = `<div class="card bet"><b>🔥 ${esc(teamName(b.by))} ${'بدّن رهان: هالجولة دبل'}</b>${need ? `<div class="row2"><button class="btn ghost" id="bNo">لأ</button><button class="btn" id="bOk">قبلنا!</button></div>` : '<small>ناطرين باقي القادة يوافقوا…</small>'}</div>`;
+        const ok = $('#bOk', bet), no = $('#bNo', bet); if (ok) ok.onclick = () => send({ t: 'betReply', ok: true }); if (no) no.onclick = () => send({ t: 'betReply', ok: false });
+      } else if (b && b.status === 'ok') bet.innerHTML = `<div class="card bet on"><b>🔥 الرهان مقبول — هالجولة دبل!</b></div>`;
+      else if (leaderOf) bet.innerHTML = `<div class="card bet"><div><b>إنت قائد ${esc(leaderOf.name)}</b><small>${b && b.status === 'no' ? 'انرفض الرهان. بدك تطلب مرة تانية؟' : 'بدك تطلب رهان؟ إذا وافقوا، هالجولة بتنحسب دبل.'}</small></div><button class="btn sm" id="bReq">رهان!</button></div>`;
+      else if (b && b.status === 'no') bet.innerHTML = `<div class="card bet"><small>انرفض الرهان، الجولة عادية.</small></div>`;
+      else bet.innerHTML = '';
+      void myTeam;
+      const rq = $('#bReq', bet); if (rq) rq.onclick = () => send({ t: 'bet' });
+      // التحكم
+      const ctl = $('#ictl', e); const rdy = S.order.filter(id => S.players[id] && !S.players[id].kicked && S.players[id].ready).length;
+      const tot = S.order.filter(id => S.players[id] && !S.players[id].kicked).length;
+      const myReady = me().ready;
+      ctl.innerHTML = `<button class="btn ${myReady ? 'ghost' : ''} wide" id="rdy">${myReady ? '✓ ' + myG('جاهز', 'جاهزة') : myG('أنا جاهز', 'أنا جاهزة')}</button><p class="rd">${rdy} من ${tot} جاهزين</p>` +
+        (isHost() ? `<div class="row2"><button class="btn ghost" id="pass">تمرير</button><button class="btn" id="go">يلا!</button></div>` : '');
+      $('#rdy', ctl).onclick = async () => { if (M.sensor) await askSensor(); send({ t: 'ready', v: !me().ready }); };
+      const go = $('#go', ctl); if (go) go.onclick = () => { go.disabled = true; host('go'); };
+      const ps = $('#pass', ctl); if (ps) ps.onclick = () => host('pass');
+    }
+    sc.mounted = upd; sc.update = upd;
+    return sc;
+  }
+  async function askSensor() { try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') await DeviceOrientationEvent.requestPermission(); } catch (e) {} }
+
+  // ═════════════ اللعب ═════════════
+  function playScreen(key) {
+    const c = S.cur, M = META[c.game], active = c.active.includes(pid);
+    const isServerGame = !!IMPL[c.game].server;
+    const e = el(`<section class="play"><div class="play-top"><span class="pg-name">${I[c.game]} ${M.name}</span>${c.bet && c.bet.status === 'ok' ? '<span class="dbl">دبل 🔥</span>' : ''}<span class="timer" id="tm"></span></div>
+      <div class="tv-frame"><div class="stage" id="stage"></div><div class="count" id="count"></div><div class="doneov" id="doneov" hidden></div></div>
+      <div id="spect"></div><div id="hctl"></div><p class="sig small">إعداد م. إياد حلوبي</p></section>`);
+    const sc = { key, el: e }; let mod = null, finished = false, forced = false, tmIv;
+    const X = {
+      seed: c.seed, rng: mulberry32(c.seed), now, startAt: c.startAt, endAt: c.endAt, me: pid,
+      finish(r) { if (finished) return; finished = true; send({ t: 'result', rk: r.rk, label: r.label, done: r.done }); showDone(r); },
+      prog(p) { send({ t: 'prog', p }); },
+      tap(n) { send({ t: 'tap', n }); }, hatPass(to) { send({ t: 'hatPass', to }); },
+      icon: n => I[n], avatar, esc, nameOf, player: id => S.players[id], teamOf: id => S.players[id] && S.players[id].team, teamName, isTeam: isTeam(), g: myG, active,
+    };
+    function showDone(r) {
+      if (isServerGame) return;
+      const ov = $('#doneov', e); ov.hidden = false;
+      ov.innerHTML = `<div class="done-card"><b>${r.done ? myG('خلصت!', 'خلصتي!') : 'خلص الوقت'}</b><span>${esc(r.label)}</span><small>ناطرين الباقي…</small><div id="live"></div></div>`;
+      liveBars();
+    }
+    function liveBars() {
+      const box = $('#live', e) || $('#spect', e); if (!box) return;
+      const ids = S.cur.active;
+      box.innerHTML = `<div class="live">${ids.map(id => { const r = S.cur.results[id]; const p = r ? 1 : (S.cur.prog[id] || 0); return `<div class="lv"><span>${avatar(id, 24)} ${esc(nameOf(id))}</span><div><i style="width:${p * 100}%;background:var(--c${S.players[id].color})"></i></div><b>${r ? '✓' : ''}</b></div>`; }).join('')}</div>`;
+    }
+    function spect() {
+      const box = $('#spect', e);
+      if (active || isServerGame) { if (!finished) box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="card"><b>${S.settings.mode === 'relay' ? 'مو دورك هالجولة — شجّع فريقك!' : 'إنت عم تتفرّج هالجولة'}</b></div>`;
+      const d = document.createElement('div'); d.id = 'live'; box.firstChild.appendChild(d); liveBars();
+    }
+    function hctl() {
+      const box = $('#hctl', e);
+      box.innerHTML = isHost() ? `<div class="hbar"><button class="link" id="rp">إعادة اللعبة</button><button class="link" id="st">وقّف اللعبة</button></div>` : '';
+      const rp = $('#rp', box); if (rp) rp.onclick = () => confirmBox('نعيد اللعبة؟ النتيجة بتنلغى.', 'نعيد', () => host('replay'));
+      const st = $('#st', box); if (st) st.onclick = () => confirmBox('نوقّف اللعبة هون ونحسب النتيجة؟', 'وقّف', () => host('stopRound'));
+    }
+    function tick() {
+      const tm = $('#tm', e); const left = c.endAt - now();
+      if (c.game === 'hat') tm.textContent = now() < c.startAt ? '' : '⏳ ؟؟';
+      else tm.textContent = now() < c.startAt ? '' : Math.max(0, Math.ceil(left / 1000)) + ' ث';
+      const cd = $('#count', e); const toStart = c.startAt - now();
+      if (toStart > 0) { const n = Math.ceil(toStart / 1000); if (cd.dataset.n !== String(n)) { cd.dataset.n = n; cd.innerHTML = `<b>${n}</b>`; cd.hidden = false; beep(440, 0.08, 'square', 0.04); } }
+      else if (!cd.hidden) { if (cd.dataset.n !== 'go') { cd.dataset.n = 'go'; cd.innerHTML = '<b class="go">يلا!</b>'; beep(880, 0.15, 'square', 0.05); buzz(40); setTimeout(() => { cd.hidden = true; }, 600); } }
+      if (active && !isServerGame && !finished && !forced && now() > ((S.cur && S.cur.endAt) || c.endAt) + 300) { forced = true; if (mod && mod.forceEnd) mod.forceEnd(); else X.finish({ rk: -1e9, label: 'ما لحّق', done: false }); }
+    }
+    sc.mounted = () => {
+      const stage = $('#stage', e);
+      stage.classList.add('g-' + c.game);
+      if (active || isServerGame) { mod = IMPL[c.game].mount(stage, X); if (mod.onState) mod.onState(S); }
+      else stage.innerHTML = `<div class="spect-stage">${I[c.game]}<p>${esc(M.name)}</p></div>`;
+      const mine = c.results[pid]; if (mine && !isServerGame) { finished = true; showDone(mine); }
+      spect(); hctl(); tick(); tmIv = setInterval(tick, 200);
+    };
+    sc.update = () => { if (mod && mod.onState) mod.onState(S); if (finished || !active) liveBars(); spect(); hctl(); };
+    sc.destroy = () => { clearInterval(tmIv); if (mod) mod.destroy(); };
+    return sc;
+  }
+
+  // ═════════════ نتيجة اللعبة ═════════════
+  const MEDAL = ['🥇', '🥈', '🥉'];
+  function placeBadge(p) { return p < 3 ? `<i class="medal">${MEDAL[p]}</i>` : `<i class="pl">${p + 1}</i>`; }
+  function resultLabel(id, o) { const r = S.cur.results[id]; if (r && r.burned) return gend(id, 'احترق بالطاقية 🔥', 'احترقت بالطاقية 🔥'); return o.label; }
+  function resultScreen(key) {
+    const c = S.cur, M = META[c.game], o = c.outcome;
+    const hidden = S.settings.reveal === 'end';
+    const last = S.pool.length === 0;
+    let body = '';
+    if (hidden) {
+      const mine = o.players.find(p => p.id === pid);
+      body = `<div class="card hidden-res"><div class="big-ic">🤫</div><b>انحفظت النتيجة للآخر</b>${mine ? `<small>نتيجتك: ${esc(resultLabel(pid, mine))}</small>` : ''}</div>`;
+    } else if (!isTeam()) {
+      body = `<div class="card rank">${o.players.map(p => `<div class="rk ${p.id === pid ? 'me' : ''}">${placeBadge(p.place)}${avatar(p.id, 36)}<span class="nm">${esc(nameOf(p.id))}<small>${esc(resultLabel(p.id, p))}</small></span><b class="pts">+${p.pts}</b></div>`).join('')}</div>`;
+    } else {
+      body = `<div class="card rank">${o.teams.map(t => `<div class="rk team-rk" style="--pc:var(--tc${t.team})">${placeBadge(t.place)}<span class="tdot"></span><span class="nm">${esc(teamName(t.team))}<small>${o.players.filter(p => S.players[p.id] && S.players[p.id].team === t.team).map(p => esc(nameOf(p.id)) + ': ' + esc(resultLabel(p.id, p))).join(' · ')}</small></span><b class="pts">+${t.pts}</b></div>`).join('')}</div>`;
+    }
+    const e = el(`<section class="result"><p class="step">${I[c.game]} نتيجة «${M.name}»${o.mult > 1 ? ' · دبل 🔥' : ''}</p>${body}
+      <div class="fact"><div class="fact-h">كانت زمان…</div><p>${esc(factOf(c.game, c.seed))}</p></div>
+      <div id="rctl"></div></section>`);
+    const sc = { key, el: e };
+    function ctl() {
+      const box = $('#rctl', e);
+      if (isHost()) box.innerHTML = `<button class="btn big" id="nx">${last ? 'النتيجة النهائية' : 'اللعبة الجاية'}</button><div class="row2"><button class="link" id="rp">إعادة هاللعبة</button>${last ? '' : '<button class="link" id="fn">خلصنا هون</button>'}</div><p class="rem">${last ? 'هي كانت آخر لعبة' : 'باقي ' + S.pool.length + ' ألعاب'}</p>`;
+      else box.innerHTML = `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ناطرين ${esc(gend(S.hostId, 'الريس', 'الريسة'))}</div>`;
+      const nx = $('#nx', box); if (nx) nx.onclick = () => host(last ? 'finish' : 'next');
+      const rp = $('#rp', box); if (rp) rp.onclick = () => confirmBox('نعيد اللعبة؟ النتيجة بتنلغى.', 'نعيد', () => host('replay'));
+      const fn = $('#fn', box); if (fn) fn.onclick = () => confirmBox('بدك تخلّصوا هون وتشوفوا النتيجة؟', 'إي خلصنا', () => host('finish'));
+    }
+    sc.mounted = () => { ctl(); if (!hidden) { const mine = o.players.find(p => p.id === pid); const myTeamWin = isTeam() && o.teams[0] && me().team === o.teams[0].team; if ((mine && mine.place === 0 && !isTeam()) || myTeamWin) confetti(70); } };
+    sc.update = ctl;
+    return sc;
+  }
+
+  // ═════════════ الألقاب ═════════════
+  const ENC_M = ['حظ أوفر بالسهرة الجاية', 'الكاسيت لسّا ما خلص', 'شدّ حيلك، الحارة ناطرتك', 'بتردّها الجاية أكيد', 'ما حدا بيربح كل مرة'];
+  const ENC_F = ['حظ أوفر بالسهرة الجاية', 'الكاسيت لسّا ما خلص', 'شدّي حيلك، الحارة ناطرتك', 'بتردّيها الجاية أكيد', 'ما حدا بيربح كل مرة'];
+  function titleOf(place, id, k = 0) {
+    if (isTeam()) return ['زعماء الحارة', 'ولاد الحارة', 'جيران الرضا'][place] || 'الحارة ناطرتكن';
+    const f = gend(id, 0, 1);
+    if (place === 0) return f ? 'زعيمة الحارة' : 'زعيم الحارة';
+    if (place === 1) return f ? 'بنت الحارة' : 'ابن الحارة';
+    if (place === 2) return f ? 'جارة الرضا' : 'جار الرضا';
+    return (f ? ENC_F : ENC_M)[k % 5];
+  }
+  function finalRows() { // صفوف مرتّبة
+    const F = S.final; if (!F) return [];
+    return F.ranking.map((r, k) => ({ ...r, title: r.team != null ? titleOf(r.place) : titleOf(r.place, r.id, k), k }));
+  }
+
+  // ═════════════ الكشف ═════════════
+  function revealScreen(key) {
+    const e = el(`<section class="reveal"><div id="rv"></div></section>`);
+    const sc = { key, el: e };
+    function upd() {
+      const box = $('#rv', e); const rows = finalRows();
+      if (!S.revealMode) {
+        box.innerHTML = `<div class="tvcard"><div class="g-ic">${I.tv}</div><h2>خلصت الألعاب!</h2><p class="how">مين رح ${isTeam() ? 'يكونوا زعماء' : 'يكون زعيم'} الحارة؟</p></div>` +
+          (isHost() ? `<button class="btn big" id="party">حفلة كشف 🎉</button><button class="btn ghost wide" id="all">كشف دفعة وحدة</button>` : `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ${esc(gend(S.hostId, 'الريس', 'الريسة'))} عم يجهّز الكشف</div>`);
+        const p = $('#party', box), a = $('#all', box); if (p) p.onclick = () => host('revealMode', { v: 'party' }); if (a) a.onclick = () => host('revealMode', { v: 'all' });
+        return;
+      }
+      const n = rows.length, shown = Math.min(S.revealStep, n);
+      const rev = rows.slice().reverse().slice(0, shown);
+      const nextIsFirst = shown === n - 1;
+      box.innerHTML = `<p class="step">حفلة الكشف</p><div class="card rank rev">${rev.map(r => rowHtml(r)).join('') || '<p class="hint">مين أول واحد؟</p>'}</div>` +
+        (isHost() ? `<button class="btn big" id="nx">${nextIsFirst ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : 'اللي بعده'}</button>` : `<div class="wait">${nextIsFirst ? '🥁 هلأ الزعيم…' : 'ناطرين الكشف الجاي…'}</div>`);
+      const nx = $('#nx', box); if (nx) nx.onclick = () => { nx.disabled = true; host('revealNext'); };
+      const lastRow = box.querySelector('.rk:last-child'); if (lastRow) lastRow.classList.add('pop');
+    }
+    sc.mounted = upd; sc.update = upd;
+    return sc;
+  }
+  function rowHtml(r) {
+    if (r.team != null) { const t = S.teams[r.team]; return `<div class="rk team-rk" style="--pc:var(--tc${r.team})">${placeBadge(r.place)}<span class="tdot"></span><span class="nm">${esc(t ? t.name : '')}<small>${esc(r.title)}</small></span><b class="pts">${r.pts}</b></div>`; }
+    return `<div class="rk ${r.id === pid ? 'me' : ''}">${placeBadge(r.place)}${avatar(r.id, 38)}<span class="nm">${esc(nameOf(r.id))}<small>${esc(r.title)}</small></span><b class="pts">${r.pts}</b></div>`;
+  }
+  function drumrollScreen(done) {
+    const e = el(`<div class="drum"><b>3</b></div>`); const sc = { key: 'drum', el: e, drum: true };
+    sc.mounted = () => { let n = 3; const b = $('b', e); beep(440, 0.1); const iv = setInterval(() => { n--; if (n > 0) { b.textContent = n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; beep(440, 0.1); } else { clearInterval(iv); beep(880, 0.3, 'triangle', 0.06); sc.drum = false; done(); } }, 900); };
+    return sc;
+  }
+
+  // ═════════════ النتيجة النهائية ═════════════
+  function myRank() {
+    const rows = finalRows();
+    if (!isTeam()) return rows.find(r => r.id === pid);
+    return rows.find(r => r.team === me().team);
+  }
+  function bestGame(id) {
+    let best = null;
+    for (const rd of S.rounds) { const p = rd.outcome.players.find(x => x.id === id); if (!p) continue; const rank = p.place / Math.max(1, rd.outcome.players.length); if (!best || rank < best.rank) best = { rank, game: rd.game }; }
+    return best ? META[best.game].name : '';
+  }
+  function finalScreen(key) {
+    const rows = finalRows(); const F = S.final; const top = rows[0];
+    const fam = F.family;
+    const e = el(`<section class="final">
+      ${winnerHtml(rows)}
+      <div class="card rank">${rows.map(rowHtml).join('')}</div>
+      ${fam ? `<div class="card fam"><b>جيل الكاسيت ضد جيل الموبايل</b><div class="fam-bar"><i style="width:${fam.pctOld}%"></i></div><div class="fam-l"><span>📼 الكاسيت <bdi dir="ltr">${fam.pctOld}%</bdi></span><span>الموبايل <bdi dir="ltr">${100 - fam.pctOld}%</bdi> 📱</span></div><small>${fam.pctOld === 50 ? 'تعادل! الجيلين قدّ بعض' : (fam.pctOld > 50 ? 'جيل الكاسيت لسّا ماسك الحارة' : 'جيل الموبايل سحب البساط')}</small></div>` : ''}
+      <details class="card rounds"><summary>كل الألعاب بالتفصيل</summary>${S.rounds.map(rd => `<div class="rd"><b>${I[rd.game]} ${META[rd.game].name}${rd.mult > 1 ? ' · دبل' : ''}</b><small>${isTeam() ? rd.outcome.teams.map(t => (t.place + 1) + '. ' + esc(teamName(t.team))).join(' · ') : rd.outcome.players.slice(0, 5).map(p => (p.place + 1) + '. ' + esc(nameOf(p.id)) + ' (' + esc(resultLabel2(rd, p)) + ')').join(' · ')}</small></div>`).join('') || '<small>ما انلعبت ألعاب</small>'}</details>
+      <div class="card sessc"><div class="gp" data-group data-empty="">${groupPhoto ? `<img src="${groupPhoto}">` : ''}</div><div><small>${esc(S.settings.sessionType)}</small><b>${esc(S.settings.sessionName)}</b></div><button class="link" id="edS" ${isHost() ? '' : 'hidden'}>تعديل</button></div>
+      <div class="card story"><b>صورتك للستوري</b><div class="seg three" id="fmt"><button data-v="album">ألبوم</button><button data-v="ticket">تذكرة</button><button data-v="tape">كاسيت</button></div><div class="seg" id="thm"><button data-v="light">فاتح</button><button data-v="dark">داكن</button></div>
+        <div class="story-prev"><canvas id="storyCv" width="1080" height="1920"></canvas></div>
+        <div class="row2"><button class="btn" id="dl">${I.dl} حمّل الصورة</button><button class="btn ghost" id="sh">${I.share} شارك</button></div></div>
+      <a class="btn ghost wide" href="${IG}" target="_blank" rel="noopener" id="ig">شارك مع صحابك</a>
+      <div class="card install" id="inst"><b>خلّي اللعبة عموبايلك</b><small id="instTxt">بتفتح متل التطبيق، بلا ما تدوّر عالرابط.</small><button class="btn sm" id="instBtn">نزّلها</button></div>
+      <div id="hostEnd"></div>
+      <p class="sig"><bdi dir="ltr">@eyad.hloubi</bdi> · صار بدها قعدة.</p></section>`);
+    const sc = { key, el: e };
+    let fmt = 'album', thm = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    function paintStory() {
+      $$('#fmt button', e).forEach(b => b.classList.toggle('on', b.dataset.v === fmt));
+      $$('#thm button', e).forEach(b => b.classList.toggle('on', b.dataset.v === thm));
+      drawStory($('#storyCv', e), fmt, thm);
+    }
+    sc.mounted = () => {
+      if (!sc._conf) { sc._conf = true; const r = myRank(); if (r && r.place === 0) confetti(160); }
+      paintStory();
+      $$('#fmt button', e).forEach(b => b.onclick = () => { fmt = b.dataset.v; paintStory(); });
+      $$('#thm button', e).forEach(b => b.onclick = () => { thm = b.dataset.v; paintStory(); });
+      $('#dl', e).onclick = () => { const a = document.createElement('a'); a.download = 'قعدة-زمان-' + (nameOf(pid) || 'أنا') + '.png'; a.href = $('#storyCv', e).toDataURL('image/png'); a.click(); };
+      $('#sh', e).onclick = () => $('#storyCv', e).toBlob(async b => { try { const f = new File([b], 'qa3da-zaman.png', { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [f] })) await navigator.share({ files: [f], title: 'قعدة زمان' }); else $('#dl', e).click(); } catch (x) {} });
+      $('#edS', e).onclick = editSession;
+      hostEnd();
+      setupInstall(e);
+    };
+    function hostEnd() {
+      const box = $('#hostEnd', e); $('#edS', e).hidden = !isHost();
+      if (!isHost()) { box.innerHTML = ''; return; }
+      if (!$('#again', box)) { box.innerHTML = '<button class="btn big" id="again">قعدة جديدة بنفس الناس</button>'; $('#again', box).onclick = () => confirmBox('نبلّش قعدة جديدة بنفس الناس؟', 'يلا', () => host('again')); }
+    }
+    sc.update = () => { const s = $('.sessc', e); if (s) { $('b', s).textContent = S.settings.sessionName; $('small', s).textContent = S.settings.sessionType; } hostEnd(); paintStory(); };
+    sc.refresh = paintStory;
+    return sc;
+  }
+  function winnerHtml(rows) {
+    const tops = rows.filter(r => r.place === 0); if (!tops.length) return '';
+    if (tops.length > 1) return `<div class="winner"><div class="w-tie">${tops.map(t => t.team != null ? `<span class="w-team sm" style="--pc:var(--tc${t.team})">${esc(teamName(t.team))}</span>` : avatar(t.id, 76)).join('')}</div><small>تعادل! ${tops[0].team != null ? 'زعماء الحارة سوا' : 'الزعامة مقسومة'}</small><h2>${tops.map(t => esc(t.team != null ? '' : nameOf(t.id))).filter(Boolean).join(' و ')}</h2></div>`;
+    const t = tops[0];
+    return `<div class="winner">${t.team != null ? `<div class="w-team" style="--pc:var(--tc${t.team})">${esc(teamName(t.team))}</div>` : avatar(t.id, 120)}<small>${esc(t.title)}</small>${t.team != null ? '' : `<h2>${esc(nameOf(t.id))}</h2>`}</div>`;
+  }
+  function resultLabel2(rd, p) { const r = rd.results && rd.results[p.id]; if (r && r.burned) return gend(p.id, 'احترق', 'احترقت'); return p.label; }
+  function editSession() {
+    const s = S.settings;
+    sheet(`<h3>تعديل القعدة</h3><label class="fld"><span>اسم القعدة</span><input id="esN" maxlength="30" value="${esc(s.sessionName)}"></label><label class="fld"><span>نوع القعدة</span><input id="esT" maxlength="20" value="${esc(s.sessionType)}"></label>
+      <div class="gp-row"><div class="gp" data-group data-empty="${esc(I.cam)}">${groupPhoto ? `<img src="${groupPhoto}">` : I.cam}</div><div><b>الصورة الجماعية</b><div class="row2 sm"><button class="btn ghost sm" id="gpSel">${I.cam} سيلفي</button><button class="btn ghost sm" id="gpGal">${I.img} من الصور</button></div></div></div><input type="file" accept="image/*" id="gpFile" hidden>
+      <button class="btn" id="esOk">حفظ</button>`, (el2, close) => { bindGroupPhoto(el2); $('#esOk', el2).onclick = () => { const n = $('#esN', el2).value.trim(); if (!n) return toast('اسم القعدة إجباري'); host('settings', { v: { sessionName: n, sessionType: $('#esT', el2).value.trim() || 'شلة' } }); close(); }; });
+  }
+
+  // ───────── التثبيت كتطبيق ─────────
+  let deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+  function setupInstall(root) {
+    const box = $('#inst', root); if (!box) return;
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (standalone) { box.remove(); return; }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    $('#instBtn', box).onclick = async () => {
+      if (deferredInstall) { deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (x) {} deferredInstall = null; return; }
+      sheet(ios ? `<h3>نزّلها عالآيفون</h3><ol class="steps"><li>افتح الرابط من <b>Safari</b></li><li>اكبس زر المشاركة <b>⬆︎</b> تحت</li><li>اختار <b>«إضافة إلى الشاشة الرئيسية»</b></li><li>اكبس <b>إضافة</b></li></ol>` : `<h3>نزّلها عالموبايل</h3><ol class="steps"><li>افتح قائمة المتصفح <b>⋮</b></li><li>اختار <b>«تثبيت التطبيق»</b> أو «إضافة للشاشة الرئيسية»</li></ol>`);
+    };
+  }
+
+  // ═════════════ صورة الستوري ═════════════
+  const imgCache = {};
+  function loadImg(src) { if (!src) return Promise.resolve(null); if (imgCache[src]) return imgCache[src]; return (imgCache[src] = new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; })); }
+  let storyJob = 0;
+  async function drawStory(cv, fmt, thm) {
+    const job = ++storyJob;
+    try { await Promise.all([document.fonts.load('600 60px Marhey'), document.fonts.load('700 40px "IBM Plex Sans Arabic"'), document.fonts.load('400 40px "IBM Plex Sans Arabic"')]); } catch (e) {}
+    const [ph, gp] = await Promise.all([loadImg(photos[pid]), loadImg(groupPhoto)]);
+    if (job !== storyJob) return;
+    const x = cv.getContext('2d'); const W = 1080, H = 1920;
+    const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const dark = thm === 'dark';
+    const C = { bg: dark ? '#141A2B' : '#F1E6D0', card: dark ? '#222A44' : '#FFF8EA', ink: '#0A0E19', text: dark ? '#F3EAD8' : '#1B2238', sub: dark ? 'rgba(243,234,216,.7)' : 'rgba(27,34,56,.65)', o: css('--c0'), b: css('--c4'), a: css('--c3'), r: css('--c2'), d: css('--c1') };
+    const myCol = css('--c' + me().color) || C.o;
+    const r = myRank() || { place: 0, pts: 0, title: '' };
+    const n = S.final ? S.final.ranking.length : 0;
+    const title = r.title || '';
+    const name = nameOf(pid);
+    const placeTxt = isTeam() ? `${teamName(me().team)} · المركز ${r.place + 1} من ${n}` : `المركز ${r.place + 1} من ${n} · ${r.pts} نقطة`;
+    const best = bestGame(pid); const bestTxt = best ? 'أحلى لعبة: ' + best : '';
+    const sess = `${S.settings.sessionType} · ${S.settings.sessionName}`;
+    const genTxt = S.settings.family && me().gen ? (me().gen === 'old' ? '📼 جيل الكاسيت' : '📱 جيل الموبايل') : '';
+    const d = new Date(); const stamp = `\u2066'${String(d.getFullYear()).slice(2)} ${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getDate()).padStart(2, '0')}\u2069`;
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); x.direction = 'rtl'; x.textBaseline = 'middle';
+    const T = (s, px, py, size, col, w = 700, font = '"IBM Plex Sans Arabic"', al = 'center', maxW = 900) => { x.font = `${w} ${size}px ${font}`; x.fillStyle = col; x.textAlign = al; let sz = size; while (x.measureText(s).width > maxW && sz > 20) { sz -= 2; x.font = `${w} ${sz}px ${font}`; } x.fillText(s, px, py); };
+    const box = (bx, by, bw, bh, rad, fill, lw = 6, sh = 14) => { x.fillStyle = C.ink; rrp(x, bx + sh, by + sh, bw, bh, rad); x.fill(); x.fillStyle = fill; rrp(x, bx, by, bw, bh, rad); x.fill(); x.lineWidth = lw; x.strokeStyle = C.ink; x.stroke(); };
+    const photoIn = (bx, by, bw, bh, rad) => { x.save(); rrp(x, bx, by, bw, bh, rad); x.clip(); if (ph) { const s = Math.max(bw / ph.width, bh / ph.height); x.drawImage(ph, bx + (bw - ph.width * s) / 2, by + (bh - ph.height * s) / 2, ph.width * s, ph.height * s); } else { x.fillStyle = myCol; x.fillRect(bx, by, bw, bh); T(initials(name), bx + bw / 2, by + bh / 2 + 10, Math.min(bw, bh) * 0.5, '#fff', 700, 'Marhey'); } x.restore(); x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, bx, by, bw, bh, rad); x.stroke(); };
+    const footer = () => { T('\u2066@eyad.hloubi\u2069 · صار بدها قعدة.', W / 2, H - 80, 34, C.sub, 600); };
+    // الخلفية
+    x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
+    x.globalAlpha = dark ? 0.06 : 0.08; for (let i = 0; i < 26; i++) { x.fillStyle = [C.o, C.a, C.d, C.r][i % 4]; x.beginPath(); x.arc((i * 211) % W, (i * 389) % H, 18 + (i % 4) * 10, 0, 6.3); x.fill(); } x.globalAlpha = 1;
+
+    if (fmt === 'album') {
+      T('قعدة زمان', W / 2, 150, 96, C.text, 600, 'Marhey');
+      T(sess, W / 2, 245, 38, C.sub, 600);
+      x.save(); x.translate(W / 2, 980); x.rotate(-0.03);
+      const pw = 820, phh = 820; box(-pw / 2 - 40, -560, pw + 80, 1080, 10, '#FFFDF6');
+      photoIn(-pw / 2, -520, pw, phh, 4);
+      T(stamp, pw / 2 - 30, 260, 40, '#F07A2A', 700, 'ui-monospace, monospace', 'right');
+      T(name || 'لاعب بلا اسم', 0, 385, 84, '#1B2238', 600, 'Marhey');
+      T(title, 0, 470, 50, C.o, 700);
+      x.restore();
+      // شريط لاصق
+      x.save(); x.translate(W / 2, 400); x.rotate(0.05); x.fillStyle = dark ? 'rgba(244,201,93,.7)' : 'rgba(244,201,93,.8)'; x.fillRect(-120, -34, 240, 68); x.restore();
+      box(120, 1560, W - 240, 190, 30, C.card, 5, 10);
+      T(placeTxt, W / 2, 1620, 44, C.text, 700, undefined, 'center', 780);
+      T([bestTxt, genTxt].filter(Boolean).join(' · ') || 'لعبنا بروح زمان', W / 2, 1690, 36, C.sub, 600, undefined, 'center', 780);
+      footer();
+    } else if (fmt === 'ticket') {
+      const tx = 110, ty = 170, tw = W - 220, th = 1560;
+      box(tx, ty, tw, th, 40, C.card);
+      x.fillStyle = myCol; rrp(x, tx, ty, tw, 230, 40); x.fill(); x.fillRect(tx, ty + 150, tw, 80); x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, tx, ty, tw, th, 40); x.stroke();
+      x.beginPath(); x.moveTo(tx, ty + 230); x.lineTo(tx + tw, ty + 230); x.stroke();
+      T('سينما الحارة', W / 2, ty + 80, 46, '#1B2238', 700);
+      T('قعدة زمان', W / 2, ty + 160, 82, '#1B2238', 600, 'Marhey');
+      photoIn(W / 2 - 300, ty + 300, 600, 600, 300);
+      T(name || 'لاعب بلا اسم', W / 2, ty + 1000, 86, C.text, 600, 'Marhey');
+      T(title, W / 2, ty + 1090, 54, C.o, 700);
+      // التثقيب
+      x.setLineDash([22, 18]); x.lineWidth = 5; x.strokeStyle = C.sub; x.beginPath(); x.moveTo(tx + 60, ty + 1170); x.lineTo(tx + tw - 60, ty + 1170); x.stroke(); x.setLineDash([]);
+      x.fillStyle = C.bg; x.beginPath(); x.arc(tx, ty + 1170, 40, 0, 6.3); x.arc(tx + tw, ty + 1170, 40, 0, 6.3); x.fill();
+      T(placeTxt, W / 2, ty + 1260, 44, C.text, 700, undefined, 'center', 760);
+      T(sess, W / 2, ty + 1330, 38, C.sub, 600, undefined, 'center', 760);
+      T([bestTxt, genTxt].filter(Boolean).join(' · ') || stamp, W / 2, ty + 1400, 36, C.sub, 600, undefined, 'center', 760);
+      T('المقعد: ' + (r.place + 1), tx + tw - 70, ty + 1480, 34, C.text, 700, undefined, 'right');
+      T(stamp, tx + 70, ty + 1480, 34, C.text, 700, 'ui-monospace, monospace', 'left');
+      footer();
+    } else {
+      // غلاف كاسيت (J-card)
+      const cx0 = 100, cy0 = 140, cw = W - 200, ch = 1600;
+      box(cx0, cy0, cw, ch, 24, C.card);
+      const stripes = [C.o, C.b, C.a, C.d];
+      stripes.forEach((s, i) => { x.fillStyle = s; x.fillRect(cx0 + 3, cy0 + 70 + i * 34, cw - 6, 34); });
+      x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, cx0, cy0, cw, ch, 24); x.stroke();
+      T('قعدة زمان', W / 2, cy0 + 300, 100, C.text, 600, 'Marhey');
+      T('SIDE A', cx0 + 70, cy0 + 300, 40, C.sub, 700, 'ui-monospace, monospace', 'left');
+      photoIn(W / 2 - 330, cy0 + 400, 660, 660, 28);
+      T(name || 'لاعب بلا اسم', W / 2, cy0 + 1160, 84, C.text, 600, 'Marhey');
+      T(title, W / 2, cy0 + 1250, 52, C.o, 700);
+      x.lineWidth = 4; x.strokeStyle = C.sub; x.beginPath(); x.moveTo(cx0 + 80, cy0 + 1320); x.lineTo(cx0 + cw - 80, cy0 + 1320); x.stroke();
+      T(placeTxt, W / 2, cy0 + 1390, 44, C.text, 700, undefined, 'center', 780);
+      T(sess, W / 2, cy0 + 1455, 38, C.sub, 600, undefined, 'center', 780);
+      T([bestTxt, genTxt].filter(Boolean).join(' · ') || stamp, W / 2, cy0 + 1520, 36, C.sub, 600, undefined, 'center', 780);
+      footer();
+    }
+    // الصورة الجماعية الصغيرة
+    if (gp) { const gw = 250, gh = 188, gx = 70, gy = fmt === 'album' ? 1340 : 60; x.save(); x.translate(gx + gw / 2, gy + gh / 2); x.rotate(0.06); x.fillStyle = C.ink; x.fillRect(-gw / 2 - 12 + 8, -gh / 2 - 12 + 8, gw + 24, gh + 24); x.fillStyle = '#FFFDF6'; x.fillRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.drawImage(gp, -gw / 2, -gh / 2, gw, gh); x.lineWidth = 4; x.strokeStyle = C.ink; x.strokeRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.restore(); }
+  }
+  function rrp(x, X0, Y0, w, h, r) { x.beginPath(); x.moveTo(X0 + r, Y0); x.arcTo(X0 + w, Y0, X0 + w, Y0 + h, r); x.arcTo(X0 + w, Y0 + h, X0, Y0 + h, r); x.arcTo(X0, Y0 + h, X0, Y0, r); x.arcTo(X0, Y0, X0 + w, Y0, r); x.closePath(); }
+
+  // ═════════════ السيلفي والقص ═════════════
+  function selfie(group, cb) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('الكاميرا مو متاحة هون');
+    let stream = null, facing = group ? 'environment' : 'user';
+    const close = sheet(`<h3>${group ? 'صورة جماعية' : 'سيلفي'}</h3><div class="cam"><video playsinline autoplay muted></video><div class="cam-count" hidden></div></div><div class="row2"><button class="btn ghost" id="flip">قلب الكاميرا</button><button class="btn" id="snap">${group ? 'صوّر بعد 5 ث' : 'صوّر'}</button></div>`, (s) => {
+      const v = $('video', s);
+      const start = async () => { try { if (stream) stream.getTracks().forEach(t => t.stop()); stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 } }, audio: false }); v.srcObject = stream; v.style.transform = facing === 'user' ? 'scaleX(-1)' : ''; } catch (e) { toast('ما قدرنا نفتح الكاميرا'); } };
+      start();
+      $('#flip', s).onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; start(); };
+      $('#snap', s).onclick = () => {
+        const shoot = () => { const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; const x = c.getContext('2d'); if (facing === 'user') { x.translate(c.width, 0); x.scale(-1, 1); } x.drawImage(v, 0, 0); const src = c.toDataURL('image/jpeg', 0.9); stop(); closeIt(); cb(src); };
+        if (!group) return shoot();
+        const cc = $('.cam-count', s); cc.hidden = false; let n = 5; cc.textContent = n; const iv = setInterval(() => { n--; if (n > 0) { cc.textContent = n; beep(500, 0.06); } else { clearInterval(iv); beep(900, 0.12); shoot(); } }, 1000);
+      };
+      const obs = new MutationObserver(() => { if (!document.body.contains(s)) { stop(); obs.disconnect(); } }); obs.observe(document.body, { childList: true });
+    });
+    function stop() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+    function closeIt() { close(); }
+  }
+  function cropper(src, ratio, outW, cb) {
+    const img = new Image(); img.onload = () => {
+      const close = sheet(`<h3>قصّ الصورة</h3><div class="crop" style="aspect-ratio:${ratio}"><canvas></canvas></div><input type="range" id="zm" min="1" max="4" step="0.01" value="1"><p class="hint">اسحب لتحرّك الصورة، وكبّر من الشريط أو بإصبعين</p><button class="btn" id="cOk">تمام</button>`, (s) => {
+        const box = $('.crop', s), cv = $('canvas', s), x = cv.getContext('2d');
+        let W, H, base, z = 1, ox = 0, oy = 0;
+        const fit = () => { const r = box.getBoundingClientRect(); W = cv.width = r.width * 2; H = cv.height = r.height * 2; base = Math.max(W / img.width, H / img.height); clampO(); draw(); };
+        const clampO = () => { const s2 = base * z, iw = img.width * s2, ih = img.height * s2; ox = Math.min(0, Math.max(W - iw, ox)); oy = Math.min(0, Math.max(H - ih, oy)); };
+        const draw = () => { const s2 = base * z; x.fillStyle = '#ddd'; x.fillRect(0, 0, W, H); x.drawImage(img, ox, oy, img.width * s2, img.height * s2); };
+        setTimeout(() => { fit(); const s2 = base; ox = (W - img.width * s2) / 2; oy = (H - img.height * s2) / 2; clampO(); draw(); }, 30);
+        const pts = new Map(); let lastD = 0;
+        cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); });
+        cv.addEventListener('pointermove', e => {
+          if (!pts.has(e.pointerId)) return; const p = pts.get(e.pointerId); const dx = (e.clientX - p.x) * 2, dy = (e.clientY - p.y) * 2; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pts.size === 1) { ox += dx; oy += dy; }
+          else { const a = [...pts.values()]; const dd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (lastD) zoomTo(z * dd / lastD); lastD = dd; }
+          clampO(); draw();
+        });
+        const end = e => { pts.delete(e.pointerId); lastD = 0; }; cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+        function zoomTo(nz) { nz = Math.max(1, Math.min(4, nz)); const cxp = W / 2, cyp = H / 2; ox = cxp - (cxp - ox) * nz / z; oy = cyp - (cyp - oy) * nz / z; z = nz; $('#zm', s).value = z; clampO(); draw(); }
+        $('#zm', s).oninput = ev => zoomTo(+ev.target.value);
+        $('#cOk', s).onclick = () => { const out = document.createElement('canvas'); out.width = outW; out.height = Math.round(outW / ratio); const o = out.getContext('2d'); o.drawImage(cv, 0, 0, W, H, 0, 0, out.width, out.height); close(); cb(out.toDataURL('image/jpeg', 0.82)); };
+      });
+    }; img.src = src;
+  }
+
+  // ═════════════ كيف منلعب؟ ═════════════
+  function help() {
+    sheet(`<h3>كيف منلعب؟</h3>
+      <ol class="hsteps">
+        <li><i>${I.tv}</i><div><b>الريس بيفتح القعدة</b><small>بتطلع QR وكود من 5 أحرف، والكل بيفوت من موبايله.</small></div></li>
+        <li><i>${I.crown}</i><div><b>بيختار طريقة اللعب</b><small>فردي، أو فرق كاملة، أو فرق بعضو كل جولة. وكم لعبة بدكن.</small></div></li>
+        <li><i>${I.rotary}</i><div><b>دولاب القنوات بيختار اللعبة</b><small>والكل بيبلّش سوا بنفس اللحظة بعد العدّ.</small></div></li>
+        <li><i>${I.cassette}</i><div><b>بعد كل لعبة</b><small>ترتيب ونقاط، وبطاقة «كانت زمان».</small></div></li>
+        <li><i>${I.hat}</i><div><b>بالآخر</b><small>زعيم الحارة، ونتيجة كاملة، وصورة للستوري.</small></div></li>
+      </ol>
+      <h4>أدوات الريس</h4>
+      <ul class="hl"><li>يمرّر لعبة ما حبّوها، ويعيد لعبة ما فهموها (النتيجة بتنلغى).</li><li>يوقّف اللعبة، أو يخلّص القعدة بأي وقت.</li><li>يعدّل الأسماء، يطلّع حدا، أو يسلّم الريسة.</li><li>يختار حفلة كشف أو كشف دفعة وحدة.</li></ul>
+      <h4>الفرق والرهان</h4>
+      <ul class="hl"><li>لكل فريق قائد، وبيقدر يطلب رهان: إذا وافقت الفرق التانية، الجولة بتنحسب دبل.</li><li>بالفرق الكاملة، معدّل الفريق هو اللي بيحسب.</li></ul>
+      <h4>شغلات مهمة</h4>
+      <ul class="hl"><li>«ظبّط الأنتين» بيشتغل بميلان الموبايل، وعالآيفون اكبس «جاهز» واسمح بالحساس. وإذا ما في حساس، بتسحب بإصبعك.</li><li>إذا الريس طلع، اللعبة ما بتوقف، وبعد 45 ثانية حدا تاني بيقدر يصير الريس.</li><li>ما حدا بيشوف أرقام غيره خلال اللعب، بس الترتيب بالآخر.</li></ul>
+      <p class="ref">مرجع اللعبة: ألعاب الحارة الشعبية وأجهزة زمان (الكاسيت، الأنتين، التلفون أبو دولاب، موبايلات الأزرار).<br>إعداد م. إياد حلوبي</p>`);
+  }
+
+  // أداة فحص داخلية (للقراءة فقط) بتشتغل بس مع ?debug=1
+  if (params.get('debug') === '1') window.__zaman = () => S;
+
+  // ───────── البداية ─────────
+  document.addEventListener('DOMContentLoaded', () => {
+    $('#helpBtn').innerHTML = I.help; $('#helpBtn').onclick = help;
+    $('#themeBtn').onclick = () => { setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); if (screen && screen.refresh) screen.refresh(); };
+    setTheme(document.documentElement.dataset.theme);
+    $('#homeLink').onclick = () => { if (code && S && S.phase !== 'final') return confirmBox('بدك تطلع من القعدة؟', 'اطلع', () => { leaveRoom(); screen = null; render(); }); leaveRoom(); screen = null; render(); };
+    connect(); render();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    // نحافظ عالشاشة صاحية خلال اللعب
+    let lock = null; const wake = async () => { try { if ('wakeLock' in navigator && !lock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } } catch (e) {} };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { wake(); if (ws && ws.readyState > 1) connect(); } }); wake();
+  });
+})();

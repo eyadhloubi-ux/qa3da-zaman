@@ -1,0 +1,13 @@
+{
+  "name": "qa3da-zaman",
+  "version": "1.0.0",
+  "description": "قعدة زمان — ألعاب من أيام الكاسيت والحارة. إعداد م. إياد حلوبي",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "author": "م. إياد حلوبي (@eyad.hloubi)",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": { "express": "^5.1.0", "qrcode": "^1.5.4", "ws": "^8.18.0" },
+  "optionalDependencies": { "pg": "^8.13.0" }
+}
