@@ -367,3 +367,27 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--c4) 70%,transparent)}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
 @media (min-width:700px){#app{max-width:560px}.stage{height:min(66vh,620px)}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+
+/* زر الإنهاء فوق */
+.top-act{align-items:center}
+.end-btn{display:inline-flex;align-items:center;gap:4px;background:var(--c2);color:#fff;border:2.5px solid var(--line);border-radius:20px;padding:3px 10px 3px 8px;font-weight:700;font-size:13px;box-shadow:2px 2px 0 var(--line);margin-left:4px}
+.end-btn svg{width:17px;height:17px}
+#topTitle{font-size:18px}
+.spin-say{text-align:center;font-family:var(--tf);font-weight:600;font-size:24px;margin:6px 0 0;min-height:34px}
+.dch.pass{background:color-mix(in srgb,var(--c4) 55%,var(--paper))}
+.ready-note{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 0}
+.reveal .rk.hid{opacity:.55}
+.reveal .rk.hid .av,.reveal .rk.hid .tdot{background:var(--card2)!important;color:var(--muted)}
+.qmark{width:38px;height:38px;border-radius:50%;border:2.5px dashed var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--tf);font-size:20px;flex:0 0 auto}
+.hgames{list-style:none;padding:0;margin:0}
+.hgames li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:2px dashed color-mix(in srgb,var(--text) 15%,transparent)}
+.hgames li:last-child{border-bottom:0}
+.hgames li>i{width:40px;height:40px;flex:0 0 auto;background:var(--card2);border:2px solid var(--line);border-radius:11px;padding:5px}
+.hgames li>i svg{width:100%;height:100%}
+.hgames b{display:block;font-size:15px}.hgames b em{font-style:normal;font-weight:600;font-size:12px;color:#1B2238;background:var(--c3);border-radius:10px;padding:0 7px;margin-right:6px}
+.hgames small{color:var(--muted);font-size:13px;line-height:1.7;display:block}
+.fam-help{background:var(--card2);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.8}
+
+#topTitle{white-space:nowrap}
+body.has-end .tt-word{display:none}
+@media (min-width:430px){body.has-end .tt-word{display:inline}}

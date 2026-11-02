@@ -27,6 +27,7 @@
     crown: '<svg viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="var(--c4)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
     cam: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
     img: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>',
+    stop: '<svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.4"/><rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="currentColor"/></svg>',
     tv: '<svg viewBox="0 0 24 24"><path d="M8 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="7" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
     share: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -128,25 +129,29 @@
     netBadge(); updateTopbar();
     if (!code) { if (!screen || screen.key !== 'home') showScreen(homeScreen()); return; }
     if (!S) { if (!screen || screen.key !== 'loading') showScreen({ key: 'loading', el: el('<div class="center-msg"><div class="tv-mini">' + I.tv + '</div><p>عم نوصل للقعدة…</p></div>') }); return; }
-    if (!me() || wantProfile) { if (!screen || screen.key !== 'profile') showScreen(profileScreen()); return; }
+    const needGen = me() && S.settings.family && !me().gen && S.phase === 'lobby';
+    if (!me() || wantProfile || needGen) { if (!screen || screen.key !== 'profile') showScreen(profileScreen()); return; }
     let key = S.phase;
     const c = S.cur;
-    if (S.phase === 'intro' && prev && prev.phase === 'wheel' && c && wheelAnimKey !== c.n + ':' + c.seed) {
+    if (S.phase === 'intro' && c && c.wheelAt && wheelAnimKey !== c.n + ':' + c.seed) {
       wheelAnimKey = c.n + ':' + c.seed;
-      if (screen && screen.key && screen.key.startsWith('wheel')) { screen.spinTo(c.game, () => { if (S.phase === 'intro') { screen = null; render(); } }); return; }
+      if (now() - c.wheelAt < 6000) {
+        showScreen(wheelScreen('wheel:' + c.n + ':' + c.seed));
+        screen.spinTo(c.game, () => { screen = null; render(); });
+        hostAwayBanner(); return;
+      }
     }
-    if (screen && screen.spinning) return;
+    if (screen && screen.spinning) { hostAwayBanner(); return; }
     if (S.phase === 'final' && prev && prev.phase === 'reveal' && prev.revealMode === 'party' && !finalAnimDone) {
       finalAnimDone = true; showScreen(drumrollScreen(() => { screen = null; render(); })); return;
     }
     if (screen && screen.drum) return;
-    if (S.phase === 'wheel') key = 'wheel:' + (c && c.n) + ':' + (c && c.seed);
-    else if (S.phase === 'intro') key = 'intro:' + c.n + ':' + c.seed;
+    if (S.phase === 'intro') key = 'intro:' + c.n + ':' + c.seed;
     else if (S.phase === 'play') key = 'play:' + c.n + ':' + c.seed;
     else if (S.phase === 'result') key = 'result:' + c.n + ':' + c.seed;
     if (S.phase !== 'final' && S.phase !== 'reveal') finalAnimDone = false;
     if (!screen || screen.key !== key) {
-      const mk = { lobby: lobbyScreen, wheel: wheelScreen, intro: introScreen, play: playScreen, result: resultScreen, reveal: revealScreen, final: finalScreen }[S.phase];
+      const mk = { lobby: lobbyScreen, intro: introScreen, play: playScreen, result: resultScreen, reveal: revealScreen, final: finalScreen }[S.phase];
       if (mk) showScreen(mk(key));
     } else if (screen.update) screen.update(prev);
     hostAwayBanner();
@@ -154,9 +159,10 @@
 
   // ───────── الشريط العلوي ─────────
   function updateTopbar() {
+    const mb = $('#endBtn'); const showEnd = !!(code && S && me() && isHost() && S.phase !== 'lobby'); if (mb) mb.hidden = !showEnd; document.body.classList.toggle('has-end', showEnd);
     const t = $('#topTitle'); if (!t) return;
     const inRoom = !!(code && S && me());
-    t.innerHTML = inRoom ? `قعدة زمان <span class="code-chip">${esc(S.code)}</span>${isHost() ? ' <span class="host-chip">' + I.crown + ' ' + myG('الريس', 'الريسة') + '</span>' : ''}` : 'قعدة زمان';
+    t.innerHTML = inRoom ? `<span class="tt-word">قعدة زمان</span> <span class="code-chip">${esc(S.code)}</span>${isHost() ? ' <span class="host-chip">' + I.crown + ' ' + myG('الريس', 'الريسة') + '</span>' : ''}` : 'قعدة زمان';
   }
   function hostAwayBanner() {
     let b = $('#hostAway');
@@ -278,7 +284,7 @@
         ${s.mode !== 'solo' ? `<div class="fld"><span>عدد الفرق</span><div class="seg" id="tc">${[2, 3, 4].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>` : ''}
         <div class="fld"><span>كم لعبة؟</span><div class="seg" id="gc">${[3, 5, 7, 9].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>
         <div class="fld"><span>كشف النتيجة</span><div class="seg" id="rv"><button data-v="now">بعد كل لعبة</button><button data-v="end">بالآخر</button></div></div>
-        <label class="tgl"><input type="checkbox" id="fm" ${s.family ? 'checked' : ''}><span></span><div><b>وضع العيلة</b><small>جيل الكاسيت ضد جيل الموبايل</small></div></label></div>`;
+        <label class="tgl"><input type="checkbox" id="fm" ${s.family ? 'checked' : ''}><span></span><div><b>وضع العيلة</b><small>كل واحد بيختار جيله (كاسيت أو موبايل)، وبالآخر منعرف مين أشطر</small></div></label></div>`;
       const mark = (id, v) => $$(`#${id} button`, box).forEach(b => b.classList.toggle('on', b.dataset.v === String(v)));
       mark('md', s.mode); mark('tc', s.teamCount); mark('gc', s.gameCount); mark('rv', s.reveal);
       $$('#md button', box).forEach(b => b.onclick = () => host('settings', { v: { mode: b.dataset.v } }));
@@ -350,38 +356,32 @@
   // ═════════════ دولاب القنوات ═════════════
   function wheelScreen(key) {
     const c = S.cur; const played = S.rounds.length; const total = played + S.pool.length;
-    const e = el(`<section class="wheel-sc"><p class="step">اللعبة ${played + 1} من ${total}</p>
+    const e = el(`<section class="wheel-sc"><p class="step">اللعبة ${played + 1} من ${total}</p><p class="spin-say">الدولاب عم يدور… 📺</p>
       <div class="dial-wrap"><div class="dial"><div class="dial-ring">${GAME_ORDER.map((g, i) => { const a = i * 40; const live = S.pool.includes(g); return `<span class="dch ${live ? '' : 'dim'}" data-g="${g}" style="transform:rotate(${a}deg) translateY(-38cqw) rotate(${-a}deg)">${I[g]}</span>`; }).join('')}</div>
       <div class="knob"><i class="pointer"></i><b>قناة</b></div></div><div class="dial-tv"><div class="tv-screen small"><canvas class="static"></canvas><div class="tv-ch"></div></div></div></div>
-      <div id="wctl"></div></section>`);
+      </section>`);
     const sc = { key, el: e };
     let rot = 0;
     const cv = $('.static', e), cx = cv.getContext('2d'); cv.width = 64; cv.height = 48; const img = cx.createImageData(64, 48);
     let raf, staticOn = true;
     const f = () => { if (staticOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 190; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
-    function ctl() {
-      const box = $('#wctl', e);
-      if (isHost()) box.innerHTML = `<button class="btn big" id="spin">لفّ الدولاب</button>${played ? '<button class="link" id="fin">خلصنا، ورجينا النتيجة</button>' : ''}`;
-      else box.innerHTML = `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ${esc(gend(S.hostId, 'الريس عم يلفّ الدولاب', 'الريسة عم تلفّ الدولاب'))}</div>`;
-      const sp = $('#spin', box); if (sp) sp.onclick = () => { sp.disabled = true; host('spin'); };
-      const fn = $('#fin', box); if (fn) fn.onclick = () => confirmBox('بدك تخلّصوا هون وتشوفوا النتيجة؟', 'إي خلصنا', () => host('finish'));
-    }
-    sc.mounted = ctl; sc.update = ctl;
     sc.spinTo = (g, done) => {
-      sc.spinning = true; $('#wctl', e).innerHTML = '<div class="wait">عم يدور… 📺</div>';
-      const idx = GAME_ORDER.indexOf(g); const target = 360 * 4 + (360 - idx * 40);
-      const knob = $('.knob', e); const t0 = performance.now(), dur = 2600;
+      sc.spinning = true;
+      const idx = GAME_ORDER.indexOf(g); const target = 360 * 4 + idx * 40;
+      const knob = $('.knob', e); const t0 = performance.now(), dur = 3000;
       let lastTick = 0;
       const anim = t => {
         const k = Math.min(1, (t - t0) / dur); const ease = 1 - Math.pow(1 - k, 3); rot = target * ease;
         knob.style.transform = `rotate(${rot}deg)`;
         const cur = Math.round(rot / 40); if (cur !== lastTick) { lastTick = cur; beep(900, 0.015, 'square', 0.02); }
-        $$('.dch', e).forEach((d, i) => d.classList.toggle('hit', ((Math.round(-rot / 40) % 9) + 9) % 9 === i && false));
+        const under = ((Math.round(rot / 40) % 9) + 9) % 9;
+        $$('.dch', e).forEach((d, i) => d.classList.toggle('pass', i === under));
         if (k < 1) requestAnimationFrame(anim);
         else {
-          $$('.dch', e).forEach(d => d.classList.toggle('hit', d.dataset.g === g));
+          $$('.dch', e).forEach(d => { d.classList.remove('pass'); d.classList.toggle('hit', d.dataset.g === g); });
+          $('.spin-say', e).textContent = META[g].name + '!';
           staticOn = false; const ch = $('.tv-ch', e); ch.innerHTML = I[g]; ch.classList.add('on'); beep(660, 0.12, 'triangle', 0.05); buzz(30);
-          setTimeout(() => { sc.spinning = false; done(); }, 900);
+          setTimeout(() => { sc.spinning = false; done(); }, 1200);
         }
       };
       requestAnimationFrame(anim);
@@ -422,11 +422,12 @@
       void myTeam;
       const rq = $('#bReq', bet); if (rq) rq.onclick = () => send({ t: 'bet' });
       // التحكم
-      const ctl = $('#ictl', e); const rdy = S.order.filter(id => S.players[id] && !S.players[id].kicked && S.players[id].ready).length;
-      const tot = S.order.filter(id => S.players[id] && !S.players[id].kicked).length;
+      const ctl = $('#ictl', e); const live = S.order.filter(id => S.players[id] && !S.players[id].kicked && S.players[id].connected);
+      const rdy = live.filter(id => S.players[id].ready).length, tot = live.length;
+      const allReady = tot >= 2 && rdy === tot;
       const myReady = me().ready;
-      ctl.innerHTML = `<button class="btn ${myReady ? 'ghost' : ''} wide" id="rdy">${myReady ? '✓ ' + myG('جاهز', 'جاهزة') : myG('أنا جاهز', 'أنا جاهزة')}</button><p class="rd">${rdy} من ${tot} جاهزين</p>` +
-        (isHost() ? `<div class="row2"><button class="btn ghost" id="pass">تمرير</button><button class="btn" id="go">يلا!</button></div>` : '');
+      ctl.innerHTML = `<button class="btn ${myReady ? 'ghost' : ''} wide" id="rdy">${myReady ? '✓ ' + myG('جاهز', 'جاهزة') : myG('أنا جاهز', 'أنا جاهزة')}</button><p class="rd">${allReady ? 'الكل جاهز… يلا! 🎬' : rdy + ' من ' + tot + ' جاهزين'}</p><p class="ready-note">لما الكل يكبس «جاهز»، اللعبة بتبلّش لحالها</p>` +
+        (isHost() && !allReady ? `<div class="row2"><button class="btn ghost" id="pass">تمرير</button><button class="btn" id="go">بلّش هلأ</button></div>` : '');
       $('#rdy', ctl).onclick = async () => { if (M.sensor) await askSensor(); send({ t: 'ready', v: !me().ready }); };
       const go = $('#go', ctl); if (go) go.onclick = () => { go.disabled = true; host('go'); };
       const ps = $('#pass', ctl); if (ps) ps.onclick = () => host('pass');
@@ -558,13 +559,19 @@
         const p = $('#party', box), a = $('#all', box); if (p) p.onclick = () => host('revealMode', { v: 'party' }); if (a) a.onclick = () => host('revealMode', { v: 'all' });
         return;
       }
-      const n = rows.length, shown = Math.min(S.revealStep, n);
-      const rev = rows.slice().reverse().slice(0, shown);
-      const nextIsFirst = shown === n - 1;
-      box.innerHTML = `<p class="step">حفلة الكشف</p><div class="card rank rev">${rev.map(r => rowHtml(r)).join('') || '<p class="hint">مين أول واحد؟</p>'}</div>` +
-        (isHost() ? `<button class="btn big" id="nx">${nextIsFirst ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : 'اللي بعده'}</button>` : `<div class="wait">${nextIsFirst ? '🥁 هلأ الزعيم…' : 'ناطرين الكشف الجاي…'}</div>`);
+      // الكشف حسب المراكز: من الأخير للأول، واللي متعادلين بينكشفوا سوا
+      const places = [...new Set(rows.map(r => r.place))].sort((x, y) => y - x);
+      const shownN = Math.min(S.revealStep, places.length);
+      const shown = new Set(places.slice(0, shownN));
+      const nextPlace = places[shownN];
+      const justShown = shownN > 0 ? places[shownN - 1] : null;
+      const hiddenRow = () => `<div class="rk hid"><span class="qmark">؟</span><span class="nm">مين؟<small>لسّا ما انكشف</small></span><b class="pts">—</b></div>`;
+      const list = rows.map(r => shown.has(r.place) ? rowHtml(r).replace('class="rk', 'class="rk' + (r.place === justShown ? ' pop' : '')) : hiddenRow()).join('');
+      const btnTxt = nextPlace === 0 ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : (shownN === 0 ? 'ابدأ الكشف: المركز ' + (nextPlace + 1) : 'كشف المركز ' + (nextPlace + 1));
+      box.innerHTML = `<p class="step">حفلة الكشف</p><div class="card rank rev">${list}</div>` +
+        (isHost() ? `<button class="btn big" id="nx">${btnTxt}</button>` : `<div class="wait">${nextPlace === 0 ? '🥁 هلأ الزعيم…' : 'ناطرين الكشف الجاي…'}</div>`);
       const nx = $('#nx', box); if (nx) nx.onclick = () => { nx.disabled = true; host('revealNext'); };
-      const lastRow = box.querySelector('.rk:last-child'); if (lastRow) lastRow.classList.add('pop');
+      if (justShown != null && sc._last !== shownN) { sc._last = shownN; beep(justShown === 0 ? 880 : 520, 0.12, 'triangle', 0.05); }
     }
     sc.mounted = upd; sc.update = upd;
     return sc;
@@ -795,18 +802,36 @@
     }; img.src = src;
   }
 
+  // ═════════════ قائمة الإنهاء (للريس) ═════════════
+  function endMenu() {
+    if (!isHost()) return;
+    const canFinish = ['intro', 'play', 'result'].includes(S.phase);
+    sheet(`<h3>شو بدك تعمل؟</h3>
+      ${canFinish ? `<button class="btn big" id="emFin">خلّصنا، ورجينا النتيجة</button><p class="hint">${S.rounds.length ? 'بتنحسب الألعاب اللي خلصت (' + S.rounds.length + ')' : 'لسّا ما خلصت ولا لعبة'}</p>` : ''}
+      <button class="btn ghost big" id="emNew">قعدة جديدة بنفس الناس</button><p class="hint">بيتصفّر كل شي وبترجعوا للانتظار</p>`, (s, close) => {
+      const f = $('#emFin', s); if (f) f.onclick = () => { close(); host('finish'); };
+      $('#emNew', s).onclick = () => { close(); confirmBox('أكيد؟ رح تنمسح نتيجة هالقعدة.', 'قعدة جديدة', () => host('again')); };
+    });
+  }
+
   // ═════════════ كيف منلعب؟ ═════════════
   function help() {
     sheet(`<h3>كيف منلعب؟</h3>
       <ol class="hsteps">
         <li><i>${I.tv}</i><div><b>الريس بيفتح القعدة</b><small>بتطلع QR وكود من 5 أحرف، والكل بيفوت من موبايله.</small></div></li>
         <li><i>${I.crown}</i><div><b>بيختار طريقة اللعب</b><small>فردي، أو فرق كاملة، أو فرق بعضو كل جولة. وكم لعبة بدكن.</small></div></li>
-        <li><i>${I.rotary}</i><div><b>دولاب القنوات بيختار اللعبة</b><small>والكل بيبلّش سوا بنفس اللحظة بعد العدّ.</small></div></li>
+        <li><i>${I.rotary}</i><div><b>دولاب القنوات بيدور لحاله</b><small>وبيختار اللعبة، والكل بيبلّش سوا بنفس اللحظة بعد العدّ.</small></div></li>
         <li><i>${I.cassette}</i><div><b>بعد كل لعبة</b><small>ترتيب ونقاط، وبطاقة «كانت زمان».</small></div></li>
         <li><i>${I.hat}</i><div><b>بالآخر</b><small>زعيم الحارة، ونتيجة كاملة، وصورة للستوري.</small></div></li>
       </ol>
+      <h4>الألعاب</h4>
+      <ul class="hgames">${GAME_ORDER.map(g => `<li><i>${I[g]}</i><div><b>${META[g].name}<em>${META[g].mode} بيربح</em></b><small>${META[g].how}</small></div></li>`).join('')}</ul>
+      <h4>النقاط</h4>
+      <ul class="hl"><li>بالفردي: الأول 5 نقاط، التاني 3، التالت 2، والباقي نقطة.</li><li>اللي بيطلعوا نفس النتيجة بالضبط، بياخدوا نفس المركز ونفس النقاط.</li><li>بالفرق: الفريق الأول 3، التاني 2، التالت 1.</li></ul>
+      <h4>وضع العيلة</h4>
+      <div class="fam-help">لما تكون القعدة فيها كبار وصغار، الريس بيشغّل «وضع العيلة». كل لاعب بيختار جيله: <b>📼 جيل الكاسيت</b> (الكبار) أو <b>📱 جيل الموبايل</b> (الصغار). اللعب نفسه ما بيتغيّر، بس بالنتيجة النهائية بتطلع مقارنة: أي جيل كان أشطر بألعاب زمان؟</div>
       <h4>أدوات الريس</h4>
-      <ul class="hl"><li>يمرّر لعبة ما حبّوها، ويعيد لعبة ما فهموها (النتيجة بتنلغى).</li><li>يوقّف اللعبة، أو يخلّص القعدة بأي وقت.</li><li>يعدّل الأسماء، يطلّع حدا، أو يسلّم الريسة.</li><li>يختار حفلة كشف أو كشف دفعة وحدة.</li></ul>
+      <ul class="hl"><li>لما الكل يكبس «جاهز» اللعبة بتبلّش لحالها، أو الريس بيكبس «بلّش هلأ».</li><li>زر «إنهاء» فوق: «خلّصنا» بيطلّع النتيجة فوراً، و«قعدة جديدة» بيصفّر كل شي.</li><li>يمرّر لعبة ما حبّوها، ويعيد لعبة ما فهموها (النتيجة بتنلغى).</li><li>يوقّف اللعبة، أو يخلّص القعدة بأي وقت.</li><li>يعدّل الأسماء، يطلّع حدا، أو يسلّم الريسة.</li><li>يختار حفلة كشف أو كشف دفعة وحدة.</li></ul>
       <h4>الفرق والرهان</h4>
       <ul class="hl"><li>لكل فريق قائد، وبيقدر يطلب رهان: إذا وافقت الفرق التانية، الجولة بتنحسب دبل.</li><li>بالفرق الكاملة، معدّل الفريق هو اللي بيحسب.</li></ul>
       <h4>شغلات مهمة</h4>
@@ -820,6 +845,7 @@
   // ───────── البداية ─────────
   document.addEventListener('DOMContentLoaded', () => {
     $('#helpBtn').innerHTML = I.help; $('#helpBtn').onclick = help;
+    $('#endBtn').innerHTML = I.stop + '<span>إنهاء</span>'; $('#endBtn').onclick = endMenu;
     $('#themeBtn').onclick = () => { setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); if (screen && screen.refresh) screen.refresh(); };
     setTheme(document.documentElement.dataset.theme);
     $('#homeLink').onclick = () => { if (code && S && S.phase !== 'final') return confirmBox('بدك تطلع من القعدة؟', 'اطلع', () => { leaveRoom(); screen = null; render(); }); leaveRoom(); screen = null; render(); };

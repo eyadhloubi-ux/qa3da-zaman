@@ -23,10 +23,10 @@ const GAMES = {
   rotary:   { dur: 60 },
   t9:       { dur: 75 },
   top:      { dur: 55 },
-  marbles:  { dur: 45 },
+  marbles:  { dur: 60 },
   hat:      { dur: 0, server: true },
   tug:      { dur: 0, server: true },
-  stones:   { dur: 60 },
+  stones:   { dur: 30 },
 };
 const GAME_IDS = Object.keys(GAMES);
 const TEAM_NAMES = ['فريق الكاسيت', 'فريق الأنتين', 'فريق الدولاب', 'فريق البلبل'];
@@ -147,10 +147,11 @@ function sendPhotos(r, ws) {
 // ───────────────────────── منطق الجولات ─────────────────────────
 function startWheel(r) {
   if (!r.pool.length) return finish(r);
-  r.phase = 'wheel';
+  r.phase = 'intro';
   for (const p of Object.values(r.players)) p.ready = false;
   const pick = r.pool[crypto.randomInt(r.pool.length)];
   r.cur = { n: r.rounds.length + 1, game: pick, seed: crypto.randomInt(1, 2 ** 31), wheelAt: Date.now(), bet: null, results: {}, prog: {}, active: [] };
+  clearTimeout(r._t.auto);
   broadcast(r, true);
 }
 function pickActive(r) {
@@ -223,8 +224,8 @@ function endHat(r) {
   c.hat.burned = c.hat.holder;
   for (const id of c.active) {
     const burned = id === c.hat.burned;
-    const sec = c.hat.hold[id] / 1000;
-    c.results[id] = { rk: -(c.hat.hold[id]) - (burned ? 1e7 : 0), label: burned ? 'احترق بالطاقية' : `${sec.toFixed(1)} ث معه`, done: true, burned };
+    const ds = Math.round(c.hat.hold[id] / 100); // لأقرب عُشر ثانية
+    c.results[id] = { rk: -ds - (burned ? 1e7 : 0), label: burned ? 'احترق بالطاقية' : `${(ds / 10).toFixed(1)} ث معه`, done: true, burned };
   }
   clearTimers(r);
   broadcast(r, true);
@@ -360,14 +361,13 @@ function hostAction(r, m, pid) {
       bump('modes', s.mode);
       startWheel(r); return;
     }
-    case 'spin': { if (r.phase === 'wheel') { r.phase = 'intro'; } break; }
     case 'pass': { // تمرير لعبة ما حبوها
-      if (r.phase !== 'intro' && r.phase !== 'wheel') break;
+      if (r.phase !== 'intro') break;
       bump('passes');
       r.pool = r.pool.filter(g => g !== r.cur.game);
       startWheel(r); return;
     }
-    case 'go': { if (r.phase === 'intro') { if (r.cur.bet && r.cur.bet.status === 'wait') r.cur.bet.status = 'no'; beginCountdown(r); return; } break; }
+    case 'go': { if (r.phase === 'intro') { clearTimeout(r._t.auto); if (r.cur.bet && r.cur.bet.status === 'wait') r.cur.bet.status = 'no'; beginCountdown(r); return; } break; }
     case 'stopRound': {
       if (r.phase !== 'play') break;
       const c = r.cur;
@@ -393,11 +393,12 @@ function hostAction(r, m, pid) {
       r.phase = 'intro'; break;
     }
     case 'next': { if (r.phase === 'result') { startWheel(r); return; } break; }
-    case 'finish': { if (r.phase === 'result' || r.phase === 'wheel' || r.phase === 'intro') { finish(r); return; } break; }
+    case 'finish': { if (['intro', 'play', 'result'].includes(r.phase)) { clearTimeout(r._t.auto); finish(r); return; } break; }
     case 'revealMode': { if (r.phase === 'reveal') { r.revealMode = m.v === 'party' ? 'party' : 'all'; r.revealStep = r.revealMode === 'all' ? 999 : 0; if (r.revealMode === 'all') r.phase = 'final'; } break; }
-    case 'revealNext': { if (r.phase === 'reveal' && r.revealMode === 'party') { r.revealStep++; if (r.revealStep >= (r.final.ranking.length)) r.phase = 'final'; } break; }
+    case 'revealNext': { if (r.phase === 'reveal' && r.revealMode === 'party') { r.revealStep++; if (r.revealStep >= new Set(r.final.ranking.map(x => x.place)).size) r.phase = 'final'; } break; }
     case 'again': { // قعدة جديدة بنفس الناس
-      clearTimers(r);
+      clearTimers(r); clearTimeout(r._t.auto);
+      for (const p of Object.values(r.players)) p.ready = false;
       r.phase = 'lobby'; r.rounds = []; r.cur = null; r.final = null; r.pool = []; r.relayIdx = {}; r.revealStep = -1; r.revealMode = null;
       break;
     }
@@ -472,7 +473,23 @@ wss.on('connection', (ws) => {
       if (away && r.hostLeftAt && Date.now() - r.hostLeftAt >= HOST_GRACE_MS - 1500) { r.hostId = pid; r.hostLeftAt = null; broadcast(r, true); }
       return;
     }
-    if (m.t === 'ready') { p.ready = !!m.v; broadcast(r); return; }
+    if (m.t === 'ready') {
+      p.ready = !!m.v; broadcast(r, true);
+      clearTimeout(r._t.auto);
+      if (r.phase === 'intro') {
+        const live = activeIds(r).filter(id => r.players[id].connected);
+        if (live.length >= 2 && live.every(id => r.players[id].ready)) {
+          r._t.auto = setTimeout(() => {
+            if (r.phase !== 'intro') return;
+            const l2 = activeIds(r).filter(id => r.players[id].connected);
+            if (!l2.every(id => r.players[id].ready)) return;
+            if (r.cur.bet && r.cur.bet.status === 'wait') r.cur.bet.status = 'no';
+            beginCountdown(r);
+          }, 900);
+        }
+      }
+      return;
+    }
     const c = r.cur;
     if (m.t === 'bet') { // رهان من قائد الفريق
       if (r.phase !== 'intro' || !isTeamMode(r) || (c.bet && c.bet.status !== 'no')) return;

@@ -54,6 +54,7 @@
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function txt(ctx, s, x, y, size, color, weight = 700, font = FONT, align = 'center') { ctx.font = `${weight} ${size}px ${font}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.direction = 'rtl'; ctx.fillText(s, x, y); }
   function secs(ms) { return (ms / 1000).toFixed(1) + ' ث'; }
+  function tRk(ms) { return 1e6 - Math.round(ms / 100); }
 
   // مساعد مشترك: البداية والنهاية والتقدم
   function Runner(X, opts = {}) {
@@ -90,7 +91,7 @@
         if (s < 0) wrongT = performance.now();
         acc = clamp(acc + s, 0, need); rot += d;
         const pr = acc / need; R.prog(pr);
-        if (pr >= 1 && !R.done) { doneAt = R.elapsed(); beep(880, 0.12, 'triangle', 0.06); buzz(40); R.finish(1e6 - doneAt, secs(doneAt), true); }
+        if (pr >= 1 && !R.done) { doneAt = R.elapsed(); beep(880, 0.12, 'triangle', 0.06); buzz(40); R.finish(tRk(doneAt), secs(doneAt), true); }
       }
       function up() { lastA = null; }
       S.cv.addEventListener('pointerdown', down); S.cv.addEventListener('pointermove', move);
@@ -151,9 +152,9 @@
         rr(ctx, bx, by, bw, 14, 7); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fill();
         rr(ctx, bx + bw * (1 - pr), by, bw * pr, 14, 7); ctx.fillStyle = P.aqua; ctx.fill();
         txt(ctx, '♪', bx - 14, by + 7, 16, P.butter);
-        if (!R.done && R.started() && R.left() <= 0) R.finish(Math.round(pr * 1000), Math.round(pr * 100) + '%', false);
+        if (!R.done && R.started() && R.left() <= 0) R.finish(Math.round(pr * 100), Math.round(pr * 100) + '%', false);
       });
-      return { destroy() { stop(); S.destroy(); }, forceEnd() { const pr = acc / need; R.finish(Math.round(pr * 1000), Math.round(pr * 100) + '%', false); } };
+      return { destroy() { stop(); S.destroy(); }, forceEnd() { const pr = acc / need; R.finish(Math.round(pr * 100), Math.round(pr * 100) + '%', false); } };
     }
   };
 
@@ -186,8 +187,8 @@
         const d = Math.abs(ang - t), c = R.done ? 1 : clamp(1 - d / 32, 0, 1);
         if (R.started() && !R.done) {
           if (c > 0.86) hold += dt * 1000; else hold = Math.max(0, hold - dt * 2000);
-          if (hold >= 1100) { ch++; hold = 0; flash = 1; beep(990, 0.1, 'triangle', 0.05); buzz(30); R.prog(ch / 3); if (ch >= 3) { const ms = R.elapsed(); R.finish(1e6 - ms, secs(ms), true); } }
-          if (R.left() <= 0 && !R.done) R.finish(ch * 300 + Math.round(c * 100), ch + '/3 قنوات', false);
+          if (hold >= 1100) { ch++; hold = 0; flash = 1; beep(990, 0.1, 'triangle', 0.05); buzz(30); R.prog(ch / 3); if (ch >= 3) { const ms = R.elapsed(); R.finish(tRk(ms), secs(ms), true); } }
+          if (R.left() <= 0 && !R.done) R.finish(ch, ch + '/3 قنوات', false);
         }
         const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
         const sh = R.done ? 0 : (1 - c) * 18 * Math.sin(performance.now() / 70);
@@ -213,7 +214,7 @@
         if (!R.done) { rr(ctx, W / 2 - 130, H - 62, 260, 26, 13); ctx.fillStyle = 'rgba(10,14,25,.6)'; ctx.fill(); txt(ctx, sensorLive ? 'ميّل الموبايل يمين ويسار' : 'اسحب يمين ويسار لتدوّر الأنتين', W / 2, H - 49, 13, '#F3EAD8', 600); }
         else txt(ctx, '📺 صفيت القنوات كلها!', W / 2, H - 46, 17, '#F3EAD8');
       });
-      return { destroy() { stop(); S.destroy(); window.removeEventListener('deviceorientation', onOri); }, forceEnd() { R.finish(ch * 300, ch + '/3 قنوات', false); } };
+      return { destroy() { stop(); S.destroy(); window.removeEventListener('deviceorientation', onOri); }, forceEnd() { R.finish(ch, ch + '/3 قنوات', false); } };
     }
   };
 
@@ -244,7 +245,7 @@
         rot = clamp(rot + d, 0, req(hole));
         if (!reg && rot >= req(hole) - 5) {
           reg = true; const dg = digitOf(hole);
-          if (dg === num[pos]) { pos++; okT = performance.now(); beep(520, 0.05); buzz(15); R.prog(pos / 6); if (pos >= 6) { const ms = R.elapsed(); R.finish(1e6 - ms, secs(ms), true); } }
+          if (dg === num[pos]) { pos++; okT = performance.now(); beep(520, 0.05); buzz(15); R.prog(pos / 6); if (pos >= 6) { const ms = R.elapsed(); R.finish(tRk(ms), secs(ms), true); } }
           else { wrongT = performance.now(); beep(160, 0.2, 'sawtooth', 0.05); buzz([40, 40, 40]); }
         }
       }
@@ -289,7 +290,7 @@
   };
 
   // ═══════════════ 4) رسالة T9 ═══════════════
-  const T9 = { '1': 'اىء', '2': 'بتثة', '3': 'جحخ', '4': 'دذرز', '5': 'سشصض', '6': 'طظعغ', '7': 'فقك', '8': 'لمن', '9': 'هوي', '0': ' ' };
+  const T9 = { '1': 'اأإآءىئؤ', '2': 'بتثة', '3': 'جحخ', '4': 'دذرز', '5': 'سشصض', '6': 'طظعغ', '7': 'فقك', '8': 'لمن', '9': 'هوي', '0': ' ' };
   const PHRASES = ['رن علي', 'خلص الرصيد', 'وينك يا غالي', 'تعا عالحارة', 'ابعتلي رنة', 'صباح الخير', 'مسا الورد', 'السهرة عندنا', 'جيب الكلل معك', 'نزل المسلسل', 'رجعت عالبيت', 'بدي كاسيت جديد', 'شحنت الرصيد', 'نطرتك عالباب', 'شو عم تعمل'];
   const t9 = {
     mount(el, X) {
@@ -303,7 +304,7 @@
         const b = document.createElement('button'); b.className = 'k';
         if (k === 'C') { b.innerHTML = '<b>مسح</b>'; b.classList.add('kc'); }
         else if (k === '>') { b.innerHTML = '<b>⟵</b><small>تثبيت</small>'; b.classList.add('kc'); }
-        else b.innerHTML = `<b>${k}</b><small>${k === '0' ? 'مسافة' : T9[k].split('').join(' ')}</small>`;
+        else b.innerHTML = `<b>${k}</b><small>${k === '0' ? 'مسافة' : (k === '1' ? 'ا أ إ ء' : T9[k].split('').join(' '))}</small>`;
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); press(k); b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 120); });
         keys.appendChild(b);
       }
@@ -326,7 +327,7 @@
         const f = full();
         let ok = 0; while (ok < f.length && ok < target.length && f[ok] === target[ok]) ok++;
         R.prog(ok / target.length);
-        if (f === target) { commit(); const ms = R.elapsed(); beep(990, 0.15, 'triangle', 0.05); R.finish(1e6 - ms, secs(ms), true); draw(); }
+        if (f === target) { commit(); const ms = R.elapsed(); beep(990, 0.15, 'triangle', 0.05); R.finish(tRk(ms), secs(ms), true); draw(); }
       }
       function draw() {
         const f = full();
@@ -359,7 +360,7 @@
         }
       }
       S.cv.addEventListener('pointerdown', tap);
-      function endSpin() { if (R.done) return; const s = spinT; R.finish(Math.round(s * 1000), s.toFixed(1) + ' ث لفّ', true); }
+      function endSpin() { if (R.done) return; const s = spinT; R.finish(Math.round(s * 10), s.toFixed(1) + ' ث لفّ', true); }
       const stop = loop((dt) => {
         P = pal(); const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
         if (R.started() && phase === 'throw' && R.elapsed() > 6000) tap();
@@ -419,90 +420,104 @@
   };
 
   // ═══════════════ 6) الكلل ═══════════════
+  // 5 كلل مبعثرة بالأرض، وكلّتك بتضربهن ليفوتوا بالجورة. كل شي بيضل مكان ما وقف.
   const marbles = {
     mount(el, X) {
       const WW = 100, HH = 160;
       const S = Stage(el, { w: WW, h: HH }), ctx = S.ctx, R = Runner(X);
-      const hole = { x: 25 + X.rng() * 50, y: 26 + X.rng() * 22, r: 5.2 };
-      const start = { x: 30 + X.rng() * 40, y: 138 };
-      const obsInit = []; const nObs = 2 + Math.floor(X.rng() * 3);
-      while (obsInit.length < nObs) { const o = { x: 12 + X.rng() * 76, y: hole.y + 18 + X.rng() * 70, r: 3.2 }; if (Math.hypot(o.x - hole.x, o.y - hole.y) > 14 && Math.hypot(o.x - start.x, o.y - start.y) > 22 && obsInit.every(q => Math.hypot(q.x - o.x, q.y - o.y) > 9)) obsInit.push(o); }
-      const MR = 3.2;
-      let m, obs, shots = 0, best = Infinity, state = 'aim', drag = null, aimV = null, lastCm = null, msgT = 0, inHole = false, P = pal();
-      const OC = [];
-      function reset() { m = { x: start.x, y: start.y, vx: 0, vy: 0 }; obs = obsInit.map(o => ({ ...o, vx: 0, vy: 0 })); state = 'aim'; inHole = false; }
-      reset();
+      const hole = { x: 32 + X.rng() * 36, y: 40 + X.rng() * 20, r: 6.2 };
+      const start = { x: 50, y: 142 };
+      const MR = 3.3, TR = 3.0, N = 5;
+      const tgts = []; let guard = 0;
+      while (tgts.length < N && guard++ < 2000) {
+        const a = X.rng() * TAU, d = 14 + X.rng() * 34;
+        const o = { x: hole.x + Math.cos(a) * d, y: hole.y + Math.sin(a) * d * 1.25, vx: 0, vy: 0, r: TR, in: false };
+        if (o.x < 8 || o.x > WW - 8 || o.y < 10 || o.y > 118) continue;
+        if (tgts.every(q => Math.hypot(q.x - o.x, q.y - o.y) > 11)) tgts.push(o);
+      }
+      const COLS = ['--c1', '--c6', '--c5', '--c7', '--c3'];
+      let m = { x: start.x, y: start.y, vx: 0, vy: 0 }, sunk = 0, shots = 0, state = 'aim', drag = null, aimV = null, msg = '', msgT = 0, scratch = false, P = pal(), sinkFx = [];
       function down(e) { if (!R.started() || R.done || state !== 'aim') return; S.cv.setPointerCapture(e.pointerId); drag = S.toWorld(e); aimV = { x: 0, y: 0 }; }
-      function move(e) { if (!drag) return; const p = S.toWorld(e); let dx = p.x - drag.x, dy = p.y - drag.y; const L = Math.hypot(dx, dy), max = 45; if (L > max) { dx *= max / L; dy *= max / L; } aimV = { x: dx, y: dy }; }
+      function move(e) { if (!drag) return; const p = S.toWorld(e); let dx = p.x - drag.x, dy = p.y - drag.y; const L = Math.hypot(dx, dy), max = 42; if (L > max) { dx *= max / L; dy *= max / L; } aimV = { x: dx, y: dy }; }
       function up() {
         if (!drag) return; drag = null;
         if (!aimV || Math.hypot(aimV.x, aimV.y) < 3) { aimV = null; return; }
-        m.vx = -aimV.x * 3.1; m.vy = -aimV.y * 3.1; aimV = null; state = 'roll'; shots++; beep(400, 0.05, 'triangle', 0.05); buzz(15);
+        m.vx = -aimV.x * 3.4; m.vy = -aimV.y * 3.4; aimV = null; state = 'roll'; shots++; scratch = false; beep(400, 0.05, 'triangle', 0.05); buzz(15);
       }
       S.cv.addEventListener('pointerdown', down); S.cv.addEventListener('pointermove', move); S.cv.addEventListener('pointerup', up); S.cv.addEventListener('pointercancel', up);
-      function collide(a, b, ra, rb) { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = ra + rb; if (d > 0 && d < min) { const nx = dx / d, ny = dy / d, ov = (min - d) / 2; a.x -= nx * ov; a.y -= ny * ov; b.x += nx * ov; b.y += ny * ov; const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny; if (rv < 0) { const j = -rv * 0.92; a.vx -= j * nx; a.vy -= j * ny; b.vx += j * nx; b.vy += j * ny; if (Math.abs(rv) > 8) beep(1400, 0.02, 'square', 0.03); } } }
-      function step(dt) {
-        const all = [m, ...obs];
-        for (const b of all) {
-          b.x += b.vx * dt; b.y += b.vy * dt; const f = Math.pow(0.32, dt); b.vx *= f; b.vy *= f;
-          const r = b === m ? MR : b.r;
-          if (b.x < r) { b.x = r; b.vx = Math.abs(b.vx) * 0.6; } if (b.x > WW - r) { b.x = WW - r; b.vx = -Math.abs(b.vx) * 0.6; }
-          if (b.y < r) { b.y = r; b.vy = Math.abs(b.vy) * 0.6; } if (b.y > HH - r) { b.y = HH - r; b.vy = -Math.abs(b.vy) * 0.6; }
+      function collide(a, b, ra, rb) {
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = ra + rb;
+        if (d > 0 && d < min) {
+          const nx = dx / d, ny = dy / d, ov = (min - d) / 2; a.x -= nx * ov; a.y -= ny * ov; b.x += nx * ov; b.y += ny * ov;
+          const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rv < 0) { const j = -rv * 0.95; a.vx -= j * nx; a.vy -= j * ny; b.vx += j * nx; b.vy += j * ny; if (Math.abs(rv) > 6) beep(1500, 0.02, 'square', 0.03); }
         }
-        for (const o of obs) collide(m, o, MR, o.r);
-        for (let i = 0; i < obs.length; i++) for (let j = i + 1; j < obs.length; j++) collide(obs[i], obs[j], obs[i].r, obs[j].r);
-        const dh = Math.hypot(m.x - hole.x, m.y - hole.y), sp = Math.hypot(m.vx, m.vy);
-        if (dh < hole.r * 0.8 && sp < 60) { inHole = true; m.vx = m.vy = 0; m.x += (hole.x - m.x) * 0.5; m.y += (hole.y - m.y) * 0.5; }
-        else if (dh < hole.r && sp >= 60) { m.vx += (hole.x - m.x) * dt * 30; m.vy += (hole.y - m.y) * dt * 30; }
-        return sp;
       }
-      function settle() {
-        const dh = inHole ? 0 : Math.hypot(m.x - hole.x, m.y - hole.y);
-        const cm = inHole ? 0 : Math.round(dh / (hole.r * 2) * 7);
-        lastCm = cm; msgT = performance.now(); best = Math.min(best, cm); R.prog(shots / 3);
-        if (cm === 0) { beep(1046, 0.2, 'triangle', 0.06); buzz([30, 30, 60]); }
-        if (cm === 0 || shots >= 3) { state = 'over'; R.finish(1e6 - best * 100, best === 0 ? 'بالجورة!' : best + ' سم', true); }
-        else { state = 'wait'; setTimeout(() => { if (!R.done) reset(); }, 1100); }
+      function inHole(b, r) {
+        const dh = Math.hypot(b.x - hole.x, b.y - hole.y), sp = Math.hypot(b.vx, b.vy);
+        if (dh < hole.r - r * 0.25 && sp < 75) return true;
+        if (dh < hole.r + 1) { b.vx += (hole.x - b.x) * 0.9; b.vy += (hole.y - b.y) * 0.9; } // حافة الجورة بتسحب شوي
+        return false;
       }
+      function step(dt) {
+        const live = tgts.filter(t => !t.in);
+        for (const b of [m, ...live]) {
+          b.x += b.vx * dt; b.y += b.vy * dt; const f = Math.pow(0.3, dt); b.vx *= f; b.vy *= f;
+          const r = b === m ? MR : TR;
+          if (b.x < r) { b.x = r; b.vx = Math.abs(b.vx) * 0.55; } if (b.x > WW - r) { b.x = WW - r; b.vx = -Math.abs(b.vx) * 0.55; }
+          if (b.y < r) { b.y = r; b.vy = Math.abs(b.vy) * 0.55; } if (b.y > HH - r) { b.y = HH - r; b.vy = -Math.abs(b.vy) * 0.55; }
+        }
+        for (const t of live) collide(m, t, MR, TR);
+        for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) collide(live[i], live[j], TR, TR);
+        for (const t of live) if (inHole(t, TR)) { t.in = true; t.vx = t.vy = 0; sunk++; sinkFx.push({ x: hole.x, y: hole.y, t: 0 }); beep(1046, 0.15, 'triangle', 0.06); buzz([20, 30, 40]); msg = 'فاتت! ' + sunk + '/' + N; msgT = performance.now(); R.prog(sunk / N); }
+        if (!scratch && inHole(m, MR)) { scratch = true; m.vx = m.vy = 0; msg = 'كلّتك وقعت! رجعت لخط البداية'; msgT = performance.now(); beep(220, 0.15, 'sawtooth', 0.04); }
+      }
+      function result() { const ms = R.elapsed(); return sunk >= N ? { rk: N * 100000 + (100000 - Math.round(ms / 100)), label: 'الخمسة! ' + secs(ms) } : { rk: sunk * 100000, label: sunk + '/' + N + ' بالجورة' }; }
       const stop = loop((dt) => {
         P = pal();
-        if (state === 'roll') { let sp = 0; for (let i = 0; i < 3; i++) sp = step(dt / 3); const moving = [m, ...obs].some(b => Math.hypot(b.vx, b.vy) > 1.2); if (!moving || inHole) settle(); void sp; }
-        if (!R.done && R.started() && R.left() <= 0) R.finish(best === Infinity ? 0 : 1e6 - best * 100, best === Infinity ? 'بلا رمية' : best + ' سم', best !== Infinity);
-        S.screenT(); ctx.clearRect(0, 0, S.W, S.H);
-        S.worldT();
-        // أرض ترابية
+        if (state === 'roll') {
+          for (let i = 0; i < 3; i++) step(dt / 3);
+          const moving = [m, ...tgts.filter(t => !t.in)].some(b => Math.hypot(b.vx, b.vy) > 1.2);
+          if (!moving) {
+            if (scratch) { m.x = start.x; m.y = start.y; scratch = false; }
+            // ما في كلّة بتطلع برّا خط البداية: إذا كلّتك وقفت لتحت، بترجع للخط
+            if (m.y > start.y) m.y = start.y;
+            if (sunk >= N) { state = 'over'; const r0 = result(); R.finish(r0.rk, r0.label, true); }
+            else state = 'aim';
+          }
+        }
+        if (!R.done && R.started() && R.left() <= 0) { const r0 = result(); R.finish(r0.rk, r0.label, sunk > 0); }
+        for (const f of sinkFx) f.t += dt; sinkFx = sinkFx.filter(f => f.t < 0.7);
+        S.screenT(); ctx.clearRect(0, 0, S.W, S.H); S.worldT();
         ctx.fillStyle = '#C9A774'; rr(ctx, 0, 0, WW, HH, 6); ctx.fill();
         ctx.fillStyle = 'rgba(90,58,42,.12)'; for (let i = 0; i < 40; i++) { const x = (i * 37.3) % WW, y = (i * 61.7) % HH; ctx.beginPath(); ctx.arc(x, y, 0.7 + (i % 3) * 0.4, 0, TAU); ctx.fill(); }
-        // خط البداية
-        ctx.setLineDash([2, 2]); ctx.strokeStyle = 'rgba(243,234,216,.8)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(6, start.y + 8); ctx.lineTo(WW - 6, start.y + 8); ctx.stroke(); ctx.setLineDash([]);
-        // الجورة
+        ctx.setLineDash([2, 2]); ctx.strokeStyle = 'rgba(243,234,216,.8)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(6, start.y + 7); ctx.lineTo(WW - 6, start.y + 7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(hole.x, hole.y, hole.r + 1.6, 0, TAU); ctx.strokeStyle = 'rgba(90,58,42,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
         ctx.beginPath(); ctx.arc(hole.x, hole.y, hole.r, 0, TAU); ctx.fillStyle = '#4A2E1E'; ctx.fill(); ctx.lineWidth = 0.9; ctx.strokeStyle = '#2B1A10'; ctx.stroke();
-        ctx.beginPath(); ctx.arc(hole.x, hole.y, hole.r + 1.4, 0, TAU); ctx.strokeStyle = 'rgba(90,58,42,.35)'; ctx.lineWidth = 1.2; ctx.stroke();
-        // الكلل التانية
-        const oc = [P.denim, P.avocado, P.plum, P.brick];
-        obs.forEach((o, i) => { marble(o.x, o.y, o.r, oc[i % 4]); });
-        if (!inHole || state !== 'over') marble(m.x, m.y, MR, P.orange, true);
-        // التصويب
+        for (const f of sinkFx) { ctx.beginPath(); ctx.arc(f.x, f.y, hole.r + f.t * 14, 0, TAU); ctx.strokeStyle = `rgba(242,193,78,${1 - f.t / 0.7})`; ctx.lineWidth = 1.2; ctx.stroke(); }
+        tgts.forEach((t, i) => { if (!t.in) marble(t.x, t.y, TR, css(COLS[i])); });
+        marble(m.x, m.y, MR, P.orange, true);
         if (aimV && state === 'aim') {
           const L = Math.hypot(aimV.x, aimV.y);
-          ctx.setLineDash([1.5, 2.5]); ctx.strokeStyle = '#F3EAD8'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - aimV.x * 1.6, m.y - aimV.y * 1.6); ctx.stroke(); ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(m.x, m.y, MR + 1 + L / 45 * 5, 0, TAU); ctx.strokeStyle = L > 38 ? P.rose : P.butter; ctx.lineWidth = 1; ctx.stroke();
+          ctx.setLineDash([1.5, 2.5]); ctx.strokeStyle = '#F3EAD8'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - aimV.x * 1.7, m.y - aimV.y * 1.7); ctx.stroke(); ctx.setLineDash([]);
+          ctx.beginPath(); ctx.arc(m.x, m.y, MR + 1 + L / 42 * 5, 0, TAU); ctx.strokeStyle = L > 35 ? P.rose : P.butter; ctx.lineWidth = 1; ctx.stroke();
         }
         S.screenT();
-        // معلومات
-        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(S.W - 20 - i * 18, 20, 6, 0, TAU); ctx.fillStyle = i < 3 - shots ? P.orange : 'rgba(255,255,255,.3)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#0A0E19'; ctx.stroke(); }
-        if (best < Infinity) txt(ctx, 'أحسن رمية: ' + (best === 0 ? 'بالجورة' : best + ' سم'), 16, 20, 13, '#1B2238', 700, FONT, 'left');
-        if (performance.now() - msgT < 1100 && lastCm != null) { const t = lastCm === 0 ? 'بالجورة! 🎯' : lastCm + ' سم عن الجورة'; rr(ctx, S.W / 2 - 100, S.H * 0.45 - 20, 200, 40, 20); ctx.fillStyle = 'rgba(27,34,56,.85)'; ctx.fill(); txt(ctx, t, S.W / 2, S.H * 0.45, 17, '#F3EAD8'); }
-        if (state === 'aim' && !R.done) txt(ctx, 'اسحب لورا وفلّت لترمي الكلّة', S.W / 2, S.H - 16, 13, '#1B2238', 700);
+        // عدّاد الكلل اللي فاتت
+        for (let i = 0; i < N; i++) { ctx.beginPath(); ctx.arc(S.W - 18 - i * 17, 20, 6, 0, TAU); ctx.fillStyle = i < sunk ? css(COLS[N - 1 - i]) : 'rgba(27,34,56,.18)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#1B2238'; ctx.stroke(); }
+        txt(ctx, 'ضربات: ' + shots, 14, 20, 13, '#1B2238', 700, FONT, 'left');
+        if (performance.now() - msgT < 1300 && msg) { const w0 = Math.min(S.W - 30, 250); rr(ctx, S.W / 2 - w0 / 2, S.H * 0.47 - 20, w0, 40, 20); ctx.fillStyle = 'rgba(27,34,56,.88)'; ctx.fill(); txt(ctx, msg, S.W / 2, S.H * 0.47, 16, '#F3EAD8'); }
+        if (state === 'aim' && !R.done && R.started()) txt(ctx, 'اسحب لورا وفلّت، ودخّل الكلل بالجورة', S.W / 2, S.H - 14, 13, '#1B2238', 700);
+        if (R.done) txt(ctx, sunk >= N ? 'دخّلت الخمسة! 🎯' : sunk + '/' + N + ' بالجورة', S.W / 2, S.H * 0.3, 20, '#1B2238', 700, TFONT);
       });
       function marble(x, y, r, col, mine) {
         ctx.beginPath(); ctx.arc(x + 0.6, y + 0.8, r, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fill();
-        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = mine ? 0.9 : 0.6; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = mine ? 1 : 0.6; ctx.strokeStyle = '#0A0E19'; ctx.stroke();
         ctx.beginPath(); ctx.ellipse(x, y, r * 0.5, r * 0.18, 0.8, 0, TAU); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
         ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.22, 0, TAU); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+        if (mine) { ctx.beginPath(); ctx.arc(x, y, r + 1.4, 0, TAU); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 0.6; ctx.stroke(); }
       }
-      void OC;
-      return { destroy() { stop(); S.destroy(); }, forceEnd() { R.finish(best === Infinity ? 0 : 1e6 - best * 100, best === Infinity ? 'بلا رمية' : best + ' سم', best !== Infinity); } };
+      return { destroy() { stop(); S.destroy(); }, forceEnd() { const r0 = result(); R.finish(r0.rk, r0.label, sunk > 0); } };
     }
   };
 
@@ -669,13 +684,13 @@
       facts: ['الرسالة الوحدة كانت 70 حرف عربي بس، فكنا نختصر الكلام لنوفّر الرصيد.', 'كان في ناس بتكتب الرسالة والموبايل بجيبتها، بلا ما تطلّع عالشاشة.', 'الرنّة كانت رسالة لحالها: رنّة يعني «وصلت»، رنّتين يعني «انزل».'] },
     top: { name: 'البلبل', year: 1970, how: 'اكبس لما يعلى العدّاد لترمي البلبل بقوة، وبعدين اكبس بس لما تضوي الدائرة لتعطيه دفشة. أطول لفّة بتربح.', mode: 'الأطول',
       facts: ['البلبل كان يلفّ بخيط، وكان في بلابل إلها مسمار حديد بتحفر بالأرض.', 'كانت المسابقة: مين بلبله بيضل يلفّ أطول، أو مين بيضرب بلبل التاني.', 'الشطارة كانت بلفّة الخيط: إذا لفّيته غلط، البلبل بيطير لبعيد.'] },
-    marbles: { name: 'الكلل', year: 1978, how: 'اسحب لورا وفلّت لترمي الكلّة عالجورة. معك 3 رميات، وبتنحسب أحسن وحدة. الأقرب للجورة بيربح.', mode: 'الأقرب',
+    marbles: { name: 'الكلل', year: 1978, how: 'في 5 كلل مبعثرة حول الجورة. اسحب كلّتك لورا وفلّت لتضربهن وتدخّلهن، وكل كلّة بتضل مكان ما وقفت. اللي بيدخّل أكتر كلل بدقيقة بيربح، وإذا دخّلوا الخمسة الأسرع.', mode: 'الأكتر',
       facts: ['كل ولد كان عنده كيس كلل، والكلّة اللي فيها لون من جوّا كانت أغلى شي.', 'كنا نحفر الجورة بكعب الصباط، ونرسم خط البداية بعود.', 'الكلل كانت عملة الحارة: بتربح كلل، بتخسر كلل.'] },
     hat: { name: 'طاق طاق طاقية', year: 1965, how: 'الطاقية بتلفّ عليكن! إذا إجت لعندك: اكبس عليها 3 مرات وارميها لحدا. ما حدا بيعرف إيمتى بتحترق. الأقل حملاً للطاقية بيربح.', mode: 'الأقل',
       facts: ['كنا نقعد بدائرة، وواحد يلفّ ورانا بالطاقية ويغنّي، ولما يحطها ورا حدا لازم يلحقه.', 'اللي ما بينتبه إنو الطاقية وراه، كان بيقعد بنص الدائرة.', 'كانت تنلعب بساحة المدرسة، والطاقية ممكن تكون منديل أو كنزة.'] },
     tug: { name: 'شدّ الحبل', year: 1972, how: 'اكبس «شدّ!» بأسرع ما فيك لحد ما يخلص الوقت. بالفرق: معدّل الفريق هو اللي بيشدّ.', mode: 'الأقوى',
       facts: ['شدّ الحبل كانت لعبة الرحلات والأعراس، ودايماً في واحد قوي بيحطّوه بالآخر.', 'كنا نرسم خط بالطبشورة بالنص، واللي بيتعدّى الخط بيخسر.', 'السر مو بالقوة بس، بالشدّة سوا بنفس اللحظة.'] },
-    stones: { name: 'السبع حجار', year: 1968, how: 'الحجرة بتتحرك فوق البرج: اكبس لتنزلها فوق اللي قبلها. اللي بيطلع برّا بينقص. عمّر السبعة بأعرض برج.', mode: 'الأعلى',
+    stones: { name: 'السبع حجار', year: 1968, how: 'معك 30 ثانية بس! الحجرة بتتحرك فوق البرج: اكبس لتنزلها فوق اللي قبلها، واللي بيطلع برّا بينقص. اللي بيعمّر أكتر حجار بيربح، وإذا تساووا الأعرض.', mode: 'الأعلى',
       facts: ['السبع حجار: كنا نعمّرها فوق بعض ونضربها بالطابة، وبعدين نرجع نعمّرها قبل ما ينضربنا.', 'كانت الحجار تنلمّ من الطريق، وكل حجرة إلها شكلها.', 'الفريق اللي بيعمّر البرج لازم يركض أسرع من الطابة.'] },
   };
   const IMPL = { cassette, antenna, rotary, t9, top, marbles, hat, tug, stones };
