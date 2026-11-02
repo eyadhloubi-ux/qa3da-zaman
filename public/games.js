@@ -574,39 +574,134 @@
   };
 
   // ═══════════════ 8) شدّ الحبل ═══════════════
+  // رسمة حيّة: فريقين = حبل واحد بين طرفين. كل واحد لحالو (أو أكتر من فريقين) = حبال من كل الجهات لحلقة بالنص.
   const tug = {
     server: true,
     mount(el, X) {
-      el.innerHTML = `<div class="tug"><div class="tug-view"></div><div class="tug-count"></div><button class="tug-btn">شدّ!</button></div>`;
-      const view = el.querySelector('.tug-view'), btn = el.querySelector('.tug-btn'), cnt = el.querySelector('.tug-count');
-      let pending = 0, mine = 0, s = null, lastTap = 0, recent = [];
+      el.innerHTML = `<div class="tug"><svg class="tug-svg" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet"></svg><div class="tug-low"><div class="tug-count"></div><button class="tug-btn">شدّ!</button></div></div>`;
+      const svg = el.querySelector('.tug-svg'), btn = el.querySelector('.tug-btn'), cnt = el.querySelector('.tug-count');
+      const NS = 'http://www.w3.org/2000/svg';
+      let pending = 0, mine = 0, s = null, recent = [], built = '', sides = [], raf = 0, myJerk = 0;
+      const cur = { x: 0, y: 0 }, target = { x: 0, y: 0 };
       btn.addEventListener('pointerdown', (e) => {
         e.preventDefault(); if (!s || X.now() < s.cur.startAt || X.now() > s.cur.endAt) return;
         const t = performance.now(); recent = recent.filter(x => t - x < 1000); if (recent.length >= 14) return; recent.push(t);
-        pending++; mine++; lastTap = t; buzz(6); btn.classList.remove('pull'); void btn.offsetWidth; btn.classList.add('pull'); cnt.textContent = mine + ' شدّة';
+        pending++; mine++; myJerk = 1; buzz(6); btn.classList.remove('pull'); void btn.offsetWidth; btn.classList.add('pull'); cnt.textContent = mine + ' شدّة';
       });
       const iv = setInterval(() => { if (pending > 0) { const n = Math.min(8, pending); pending -= n; X.tap(n); } }, 180);
+      function sideList(c) {
+        if (X.isTeam) {
+          const ts = [...new Set(c.active.map(id => X.teamOf(id)))].sort((a, b) => a - b);
+          return ts.map(t => { const ids = c.active.filter(id => X.teamOf(id) === t); return { key: 't' + t, ids, name: X.teamName(t), col: `var(--tc${t})`, me: X.teamOf(X.me) === t, figs: ids.slice(0, 4) }; });
+        }
+        return c.active.map(id => ({ key: id, ids: [id], name: X.nameOf(id), col: `var(--c${X.player(id).color})`, me: id === X.me, figs: [id] }));
+      }
+      function initial(id) { const n = (X.nameOf(id) || '؟').trim(); return /^[اأإآ]/.test(n) ? n.slice(0, 2) : n.slice(0, 1); }
+      function fig(id, col, me, mir) { // شخص من جنب، وجهه لـ +x، إيديه عند (0,0)
+        return `<g class="lean"><path d="M-3 34 L-12 10 M-6 34 L-12 10" stroke="#0A0E19" stroke-width="4" stroke-linecap="round"/>
+          <path d="M-12 10 L-19 -9" stroke="${col}" stroke-width="9" stroke-linecap="round"/><path d="M-12 10 L-19 -9" stroke="#0A0E19" stroke-width="1.6" stroke-linecap="round" opacity=".35"/>
+          <path d="M-18 -7 L0 0" stroke="#0A0E19" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="-23" cy="-21" r="11" fill="${col}" stroke="${me ? '#F2C14E' : '#0A0E19'}" stroke-width="${me ? 4 : 2.5}"/>
+          <text transform="translate(-23 -20) scale(${mir} 1)" text-anchor="middle" dominant-baseline="central" class="fig-t">${X.esc(initial(id))}</text></g>`;
+      }
+      function build(c) {
+        sides = sideList(c); const n = sides.length; built = sides.map(x => x.key).join('|');
+        const two = n === 2;
+        sides.forEach((sd, i) => {
+          // الجهة: فريقين = يمين ويسار. أكتر = دايرة
+          const a = two ? (i === 0 ? 0 : Math.PI) : (-Math.PI / 2 + i * TAU / n);
+          sd.ux = Math.cos(a); sd.uy = Math.sin(a);
+          const rx = two ? 58 : (n > 5 ? 108 : 96), ry = two ? 0 : (n > 5 ? 88 : 78);
+          sd.ax = 180 + sd.ux * rx; sd.ay = (two ? 160 : 150) + sd.uy * ry;
+          sd.sc = two ? (sd.figs.length > 2 ? 1.15 : 1.4) : (n > 6 ? 0.78 : n > 4 ? 0.92 : 1.12);
+          sd.lean = 0; sd.prev = 0; sd.v = 0;
+        });
+        const two0 = two;
+        let h = `<defs><pattern id="rp" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#C9A774"/><rect width="4" height="8" fill="#A9844F"/></pattern></defs>`;
+        h += two0 ? `<rect x="0" y="${160 + 34 * sides[0].sc}" width="360" height="200" fill="rgba(201,167,116,.18)"/><line x1="0" y1="${160 + 34 * sides[0].sc}" x2="360" y2="${160 + 34 * sides[0].sc}" stroke="rgba(243,234,216,.35)" stroke-width="2"/>`
+                  : `<ellipse cx="180" cy="152" rx="160" ry="134" fill="rgba(201,167,116,.14)"/>`;
+        // خط الطبشورة بالنص + خطوط الفوز
+        h += two0 ? `<line x1="180" y1="118" x2="180" y2="250" stroke="#F3EAD8" stroke-width="3" stroke-dasharray="7 6"/>`
+                  : `<circle cx="180" cy="150" r="24" fill="none" stroke="#F3EAD8" stroke-width="3" stroke-dasharray="6 6"/>`;
+        h += `<g class="world">`;
+        sides.forEach((sd, i) => {
+          const far = sd.figs.length;
+          const ex = sd.ax + sd.ux * (far - 1) * 26 * sd.sc + sd.ux * 30 * sd.sc, ey = sd.ay + sd.uy * (far - 1) * 26 * sd.sc + sd.uy * 30 * sd.sc;
+          h += `<path class="rope r${i}" d="" fill="none" stroke="#5A3A2A" stroke-width="7" stroke-linecap="round"/><path class="rope2 r${i}b" d="" fill="none" stroke="url(#rp)" stroke-width="4.5" stroke-linecap="round"/>`;
+          sd.ex = ex; sd.ey = ey;
+        });
+        sides.forEach((sd, i) => {
+          sd.figs.forEach((id, k) => {
+            const fx = sd.ax + sd.ux * k * 26 * sd.sc, fy = sd.ay + sd.uy * k * 26 * sd.sc;
+            const mir = sd.ux < -0.01 ? 1 : (sd.ux > 0.01 ? -1 : (i % 2 ? 1 : -1)); // وجهه للنص
+            h += `<g class="fig f${i}" data-x="${fx}" data-y="${fy}" transform="translate(${fx} ${fy}) scale(${mir * sd.sc} ${sd.sc})">${fig(id, sd.col, sd.me && (!X.isTeam ? true : id === X.me), mir)}</g>`;
+          });
+        });
+        h += `<g class="knot"><circle r="12" fill="#D9637A" stroke="#0A0E19" stroke-width="3"/><path d="M-4 9 L-9 22 M4 9 L9 22" stroke="#D9637A" stroke-width="5" stroke-linecap="round"/><circle r="4" fill="#F3EAD8"/></g>`;
+        h += `</g>`;
+        // اللافتات
+        sides.forEach((sd, i) => {
+          let lx, ly;
+          if (two0) { lx = i === 0 ? 290 : 70; ly = 40; }
+          else {
+            const reach = Math.hypot(sd.ex - 180, sd.ey - 150) + 30;
+            lx = Math.max(54, Math.min(306, 180 + sd.ux * reach)); ly = Math.max(16, Math.min(286, 150 + sd.uy * reach + (sd.uy > 0.3 ? 30 : sd.uy < -0.3 ? -32 : 30)));
+          }
+          h += `<g class="lab" transform="translate(${lx} ${ly})"><rect x="-52" y="-14" width="104" height="${two0 ? 46 : 28}" rx="10" fill="${sd.me ? '#F2C14E' : 'rgba(15,20,36,.75)'}" stroke="${sd.col}" stroke-width="2.5"/>
+            <text class="lab-n" x="0" y="${two0 ? -1 : 0}" text-anchor="middle" dominant-baseline="central" fill="${sd.me ? '#1B2238' : '#F3EAD8'}">${X.esc(sd.name.length > 13 ? sd.name.slice(0, 12) + '…' : sd.name)}</text>
+            ${two0 ? `<text class="lab-v v${i}" x="0" y="20" text-anchor="middle" dominant-baseline="central" fill="${sd.me ? '#1B2238' : '#F3EAD8'}">0</text>` : ''}</g>`;
+        });
+        svg.innerHTML = h;
+      }
+      function strengths(c) { const taps = c.tug.taps; return sides.map(sd => sd.ids.reduce((a, id) => a + (taps[id] || 0), 0) / Math.max(1, sd.ids.length)); }
       function render() {
         if (!s || !s.cur || !s.cur.tug) return;
-        const c = s.cur, taps = c.tug.taps;
+        const c = s.cur;
+        const key = sideList(c).map(x => x.key).join('|'); if (key !== built) build(c);
         const started = X.now() >= c.startAt, over = X.now() > c.endAt;
         btn.disabled = !started || over; btn.textContent = over ? 'خلص!' : 'شدّ!';
-        const teamsIn = X.isTeam ? [...new Set(c.active.map(id => X.teamOf(id)))].sort() : [];
-        if (X.isTeam && teamsIn.length === 2) {
-          const avg = t => { const m = c.active.filter(id => X.teamOf(id) === t); return m.reduce((a, id) => a + (taps[id] || 0), 0) / Math.max(1, m.length); };
-          const a = avg(teamsIn[0]), b = avg(teamsIn[1]); const off = (a - b) / Math.max(8, a + b) * 42;
-          view.innerHTML = `<div class="rope-wrap"><div class="rope-team r" style="--pc:var(--tc${teamsIn[0]})">${X.esc(X.teamName(teamsIn[0]))}<b>${a.toFixed(0)}</b></div><div class="rope-team l" style="--pc:var(--tc${teamsIn[1]})">${X.esc(X.teamName(teamsIn[1]))}<b>${b.toFixed(0)}</b></div>
-          <div class="rope"><div class="rope-line" style="transform:translateX(${off}%)"><i class="knot"></i></div><i class="mid"></i></div></div>`;
-        } else {
-          let rows;
-          if (X.isTeam) rows = teamsIn.map(t => { const m = c.active.filter(id => X.teamOf(id) === t); const v = m.reduce((a, id) => a + (taps[id] || 0), 0) / Math.max(1, m.length); return { name: X.teamName(t), v, col: `var(--tc${t})`, me: X.teamOf(X.me) === t }; });
-          else rows = c.active.map(id => ({ name: X.nameOf(id), v: taps[id] || 0, col: `var(--c${X.player(id).color})`, me: id === X.me }));
-          rows.sort((a, b) => b.v - a.v); const max = Math.max(10, ...rows.map(r => r.v));
-          view.innerHTML = `<div class="tug-bars">${rows.slice(0, 8).map(r => `<div class="tb ${r.me ? 'me' : ''}"><span>${X.esc(r.name)}</span><div><i style="width:${r.v / max * 100}%;background:${r.col}"></i></div><b>${Math.round(r.v)}</b></div>`).join('')}</div>`;
-        }
+        const st = strengths(c); const sum = st.reduce((a, b) => a + b, 0);
+        let vx = 0, vy = 0; sides.forEach((sd, i) => { vx += sd.ux * st[i]; vy += sd.uy * st[i]; });
+        const den = Math.max(sum, 10 * sides.length * 0.6);
+        const R0 = sides.length === 2 ? 56 : 58;
+        target.x = vx / den * R0 * 1.6; target.y = vy / den * R0 * 1.6;
+        const L = Math.hypot(target.x, target.y); if (L > R0) { target.x *= R0 / L; target.y *= R0 / L; }
+        sides.forEach((sd, i) => { sd.v = st[i]; const t = svg.querySelector('.v' + i); if (t) t.textContent = Math.round(st[i]); });
       }
-      const rv = setInterval(render, 250);
-      return { onState(ns) { s = ns; render(); }, destroy() { clearInterval(iv); clearInterval(rv); if (pending) X.tap(Math.min(8, pending)); } };
+      function frame() {
+        raf = requestAnimationFrame(frame);
+        if (!sides.length) return;
+        cur.x += (target.x - cur.x) * 0.12; cur.y += (target.y - cur.y) * 0.12;
+        const two = sides.length === 2;
+        const kx = 180 + cur.x, ky = (two ? 160 : 150) + cur.y;
+        const world = svg.querySelector('.world'); if (!world) return;
+        const knot = world.querySelector('.knot'); knot.setAttribute('transform', `translate(${kx} ${ky})`);
+        const tnow = performance.now() / 1000;
+        sides.forEach((sd, i) => {
+          // كل ما زاد الشد زاد الميلان، ومع رجفة خفيفة
+          const rate = Math.max(0, sd.v - sd.prev); sd.prev += (sd.v - sd.prev) * 0.2;
+          let lean = Math.min(28, 8 + rate * 6) + Math.sin(tnow * 9 + i) * 1.5;
+          if (sd.me && myJerk > 0) { lean += myJerk * 10; }
+          sd.lean += (lean - sd.lean) * 0.25;
+          const shift = two ? { x: cur.x, y: 0 } : { x: cur.x * 0.45, y: cur.y * 0.45 };
+          world.querySelectorAll('.f' + i).forEach(f => {
+            const fx = +f.dataset.x + shift.x, fy = +f.dataset.y + shift.y;
+            const t = f.getAttribute('transform').replace(/translate\([^)]*\)/, `translate(${fx.toFixed(1)} ${fy.toFixed(1)})`);
+            f.setAttribute('transform', t);
+            f.querySelector('.lean').setAttribute('transform', `rotate(${(-sd.lean).toFixed(1)} -4 34)`);
+          });
+          const hx = sd.ax + shift.x, hy = sd.ay + shift.y, ex = sd.ex + shift.x, ey = sd.ey + shift.y;
+          // الحبل مشدود: انحناء خفيف بس
+          const mx = (kx + ex) / 2, my = (ky + ey) / 2 + (two ? 5 : 3) - Math.min(4, sd.lean / 7);
+          const d = `M${kx.toFixed(1)} ${ky.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+          world.querySelector('.r' + i).setAttribute('d', d); world.querySelector('.r' + i + 'b').setAttribute('d', d);
+          void hx; void hy;
+        });
+        myJerk = Math.max(0, myJerk - 0.12);
+      }
+      raf = requestAnimationFrame(frame);
+      const rv = setInterval(render, 200);
+      return { onState(ns) { s = ns; render(); }, destroy() { clearInterval(iv); clearInterval(rv); cancelAnimationFrame(raf); if (pending) X.tap(Math.min(8, pending)); } };
     }
   };
 

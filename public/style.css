@@ -393,3 +393,13 @@ body.has-end .tt-word{display:none}
 @media (min-width:430px){body.has-end .tt-word{display:inline}}
 
 .t9-keys .k small{direction:rtl;unicode-bidi:isolate}
+
+/* شد الحبل: الرسمة */
+.tug{padding:8px 8px 14px}
+.tug-svg{width:100%;flex:1;min-height:0;display:block}
+.tug-svg .fig-t{font:700 11px "Marhey","IBM Plex Sans Arabic",sans-serif;fill:#fff}
+.tug-svg .lab-n{font:700 12.5px "IBM Plex Sans Arabic",sans-serif}
+.tug-svg .lab-v{font:700 18px ui-monospace,monospace}
+.tug-low{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.tug-low .tug-btn{width:min(46%,170px)}
+.tug-low .tug-count{font-size:20px}
