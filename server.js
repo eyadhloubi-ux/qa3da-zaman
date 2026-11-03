@@ -18,18 +18,18 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 // ───────────────────────── الألعاب ─────────────────────────
 // rk: رقم الترتيب (الأعلى أحسن) بيحسبه موبايل اللاعب
 const GAMES = {
-  cassette: { dur: 45 },
+  cassette: { dur: 25 },
   antenna:  { dur: 50 },
   rotary:   { dur: 60 },
   t9:       { dur: 75 },
-  top:      { dur: 55 },
-  marbles:  { dur: 60 },
+  chairs:   { dur: 0, server: true },
+  marbles:  { dur: 90 },
   hat:      { dur: 0, server: true },
-  tug:      { dur: 0, server: true },
-  stones:   { dur: 30 },
-  hoop:     { dur: 50 },
+  tug:      { dur: 25, server: true },
+  stones:   { dur: 25 },
+  hoop:     { dur: 360 },
   qabban:   { dur: 60 },
-  jumprope: { dur: 50 },
+  jumprope: { dur: 90 },
 };
 const GAME_IDS = Object.keys(GAMES);
 const TEAM_NAMES = ['فريق الكاسيت', 'فريق الأنتين', 'فريق الدولاب', 'فريق البلبل'];
@@ -124,13 +124,14 @@ function publicState(r) {
   const cur = r.cur ? {
     n: r.cur.n, game: r.cur.game, seed: r.cur.seed, startAt: r.cur.startAt, endAt: r.cur.endAt,
     active: r.cur.active, bet: r.cur.bet, results: r.cur.results, prog: r.cur.prog,
-    hat: r.cur.hat ? { holder: r.cur.hat.holder, from: r.cur.hat.from, passes: r.cur.hat.passes, burned: r.cur.hat.burned, hold: r.cur.hat.hold } : null,
+    hat: r.cur.hat ? { alive: r.cur.hat.alive, out: r.cur.hat.out, hats: r.cur.hat.hats, pause: r.cur.hat.pause === Infinity ? 9e15 : r.cur.hat.pause, msg: r.cur.hat.msg } : null,
+    chairs: r.cur.chairs ? { alive: r.cur.chairs.alive, out: r.cur.chairs.out, round: r.cur.chairs.round, phase: r.cur.chairs.phase, n: r.cur.chairs.n, seats: r.cur.chairs.seats, layout: r.cur.chairs.layout, frozen: r.cur.chairs.frozen, lastOut: r.cur.chairs.lastOut, stopAt: r.cur.chairs.phase === 'music' ? null : r.cur.chairs.stopAt } : null,
     tug: r.cur.tug || null, outcome: r.cur.outcome || null, wheelAt: r.cur.wheelAt, picks: r.cur.picks,
   } : null;
   return {
     code: r.code, hostId: r.hostId, hostAway: !!r.hostLeftAt, hostLeftAt: r.hostLeftAt, now: Date.now(), phase: r.phase,
     players, order: r.order, settings: { ...r.settings, groupPhoto: undefined, hasGroupPhoto: !!r.settings.groupPhoto },
-    teams: teamsOf(r), relayIdx: r.relayIdx, pool: r.pool, rounds: r.rounds, cur, final: r.final, revealStep: r.revealStep, revealMode: r.revealMode, photoVer: r.photoVer,
+    teams: teamsOf(r), pool: r.pool, rounds: r.rounds, cur, final: r.final, revealStep: r.revealStep, revealMode: r.revealMode, photoVer: r.photoVer,
   };
 }
 function send(ws, msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); }
@@ -159,15 +160,6 @@ function startWheel(r) {
 }
 function pickActive(r) {
   const ids = activeIds(r);
-  if (r.settings.mode === 'relay') {
-    const out = [];
-    for (const tm of teamsOf(r)) {
-      if (!tm.members.length) continue;
-      const k = (r.relayIdx[tm.i] || 0) % tm.members.length;
-      out.push(tm.members[k]);
-    }
-    return out;
-  }
   if (r.settings.mode === 'team') return ids.filter(id => r.players[id].team != null);
   return ids;
 }
@@ -179,16 +171,17 @@ function beginCountdown(r) {
   c.startAt = Date.now() + 3600;
   const g = GAMES[c.game];
   if (c.game === 'hat') {
-    const dur = 18000 + (c.seed % 15000);
-    c.endAt = c.startAt + dur;
-    const holder = c.active[c.seed % c.active.length];
-    c.hat = { holder, from: null, since: c.startAt, passes: 0, hold: {}, burned: null };
-    for (const id of c.active) c.hat.hold[id] = 0;
-    r._t.end = setTimeout(() => endHat(r), c.endAt - Date.now());
-    r._t.hatTick = setInterval(() => hatWatchdog(r), 1000);
+    c.endAt = 0;
+    c.hat = { alive: c.active.slice(), out: [], hats: [], pause: c.startAt, msg: null };
+    spawnHats(r, c.startAt);
+    r._t.hatTick = setInterval(() => hatTick(r), 150);
+  } else if (c.game === 'chairs') {
+    c.endAt = 0;
+    c.chairs = { alive: c.active.slice(), out: [], round: 0 };
+    chairsMusic(r, c.startAt);
+    r._t.hatTick = setInterval(() => chairsTick(r), 120);
   } else if (c.game === 'tug') {
-    const dur = 10000 + (c.seed % 5) * 1000;
-    c.endAt = c.startAt + dur;
+    c.endAt = c.startAt + g.dur * 1000;
     c.tug = { taps: {} };
     for (const id of c.active) c.tug.taps[id] = 0;
     r._t.end = setTimeout(() => endTug(r), c.endAt - Date.now() + 600);
@@ -202,41 +195,130 @@ function beginCountdown(r) {
 }
 function clearTimers(r) { clearTimeout(r._t.end); clearInterval(r._t.hatTick); r._t.end = null; r._t.hatTick = null; }
 
-function hatHolderTime(c, now) { return Math.max(0, now - Math.max(c.hat.since, c.startAt)); }
+// ═══ طاق طاق طاقية: كل 4 لاعبين طاقية، لكل طاقية فتيل بيبيّن للكل، واللي بتحترق معه بيطلع ═══
+function hatCount(n) { return Math.max(1, Math.min(n - 1, Math.ceil(n / 4))); }
+function liveAlive(r, list) { return list.filter(id => r.players[id] && !r.players[id].kicked); }
+function spawnHats(r, at) {
+  const c = r.cur, h = c.hat;
+  h.alive = liveAlive(r, h.alive);
+  const k = hatCount(h.alive.length);
+  const pool = shuffle(h.alive.slice());
+  h.hats = [];
+  for (let i = 0; i < k; i++) {
+    const len = 6000 + crypto.randomInt(9000); // 6–15 ثانية، والكل شايف الفتيل
+    h.hats.push({ id: i, holder: pool[i], from: null, since: at, fuseStart: at, fuseEnd: at + len + i * 1500 });
+  }
+  h.pause = at; h.msg = null;
+}
+function hatOf(h, pid) { return h.hats.find(x => x.holder === pid); }
 function hatPass(r, from, to) {
-  const c = r.cur; if (!c || c.game !== 'hat' || r.phase !== 'play' || c.hat.burned) return;
-  const now = Date.now(); if (now < c.startAt || now >= c.endAt) return;
-  if (c.hat.holder !== from || from === to || !c.active.includes(to)) return;
-  if (isTeamMode(r) && r.players[to].team === r.players[from].team && teamsOf(r).filter(t => t.members.some(m => c.active.includes(m))).length > 1) return;
-  c.hat.hold[from] += hatHolderTime(c, now);
-  c.hat.from = from; c.hat.holder = to; c.hat.since = now; c.hat.passes++;
+  const c = r.cur; if (!c || c.game !== 'hat' || r.phase !== 'play') return;
+  const h = c.hat, now = Date.now(); if (now < h.pause) return;
+  const hat = hatOf(h, from); if (!hat) return;
+  if (from === to || !h.alive.includes(to) || hatOf(h, to)) return;
+  if (h.alive.length > 2 && hat.from === to && now - hat.since < 1500) return; // ما في رجعة فورية لنفس الشخص
+  if (isTeamMode(r)) {
+    const teamsAlive = new Set(h.alive.map(id => r.players[id].team));
+    const others = h.alive.filter(id => r.players[id].team !== r.players[from].team && !hatOf(h, id));
+    if (teamsAlive.size > 1 && others.length && r.players[to].team === r.players[from].team) return;
+  }
+  hat.from = from; hat.holder = to; hat.since = now;
   broadcast(r, true);
 }
-function hatWatchdog(r) { // إذا اللي معه الطاقية فصل، بتنتقل لحالها
-  const c = r.cur; if (!c || !c.hat || c.hat.burned) return;
-  const h = r.players[c.hat.holder];
-  if ((!h || !h.connected || h.kicked) && Date.now() - c.hat.since > 4000) {
-    const opts = c.active.filter(id => id !== c.hat.holder && r.players[id] && r.players[id].connected);
-    if (opts.length) hatPass(r, c.hat.holder, opts[crypto.randomInt(opts.length)]);
+function hatTick(r) {
+  const c = r.cur; if (!c || !c.hat || r.phase !== 'play') return;
+  const h = c.hat, now = Date.now(); if (now < h.pause) return;
+  // اللي فصل أو انطرد ومعه طاقية: بتنتقل لحالها
+  for (const hat of h.hats) {
+    const p = r.players[hat.holder];
+    if (!p || p.kicked || !h.alive.includes(hat.holder) || (!p.connected && now - hat.since > 3000)) {
+      const opts = h.alive.filter(id => id !== hat.holder && !hatOf(h, id) && r.players[id] && r.players[id].connected);
+      if (opts.length) { hat.from = hat.holder; hat.holder = opts[crypto.randomInt(opts.length)]; hat.since = now; broadcast(r, true); }
+    }
   }
+  const burnt = h.hats.filter(x => now >= x.fuseEnd);
+  if (!burnt.length) return;
+  const victims = [...new Set(burnt.map(x => x.holder))].filter(id => h.alive.includes(id));
+  h.out.push(victims); // كل اللي احترقوا بنفس اللحظة بيطلعوا سوا
+  h.alive = h.alive.filter(id => !victims.includes(id));
+  h.msg = { burned: victims, at: now };
+  h.hats = [];
+  if (liveAlive(r, h.alive).length <= 1) { broadcast(r, true); setTimeout(() => endHat(r), 2200); h.pause = Infinity; return; }
+  h.pause = now + 2600;
+  spawnHats(r, now + 2600); h.msg = { burned: victims, at: now };
+  broadcast(r, true);
+}
+function elimResults(r, alive, out, wonLabel) {
+  const c = r.cur; const groups = out.slice(); if (alive.length) groups.push(alive);
+  const n = c.active.length; let pos = n;
+  groups.forEach((g, gi) => {
+    pos -= g.length; const place = pos + 1;
+    for (const id of g) {
+      const last = gi === groups.length - 1 && alive.length;
+      c.results[id] = { rk: gi, v: place, unit: 'مركز', label: last ? wonLabel(id) : (gi === 0 ? 'أول واحد طلع' : 'طلع بالدور ' + (gi + 1)), done: true, out: !last };
+    }
+  });
+  for (const id of c.active) if (!c.results[id]) c.results[id] = { rk: -1, v: n, unit: 'مركز', label: 'طلع', done: true, out: true };
 }
 function endHat(r) {
-  const c = r.cur; if (!c || !c.hat || c.hat.burned) return;
-  const now = c.endAt;
-  c.hat.hold[c.hat.holder] += hatHolderTime(c, now);
-  c.hat.burned = c.hat.holder;
-  for (const id of c.active) {
-    const burned = id === c.hat.burned;
-    const ds = Math.round(c.hat.hold[id] / 100); // لأقرب عُشر ثانية
-    c.results[id] = { rk: -ds - (burned ? 1e7 : 0), label: burned ? 'احترق بالطاقية' : `${(ds / 10).toFixed(1)} ث معه`, done: true, burned };
-  }
+  const c = r.cur; if (!c || !c.hat || r.phase !== 'play') return;
   clearTimers(r);
-  broadcast(r, true);
-  setTimeout(() => endRound(r), 2600);
+  elimResults(r, liveAlive(r, c.hat.alive), c.hat.out, id => (r.players[id] && r.players[id].gender === 'f') ? 'آخر وحدة صامدة 🎩' : 'آخر واحد صامد 🎩');
+  endRound(r);
+}
+
+// ═══ الكراسي الموسيقية: الكراسي أقل من اللاعبين بواحد، والموسيقى بتوقف فجأة ═══
+function chairsMusic(r, at) {
+  const c = r.cur, ch = c.chairs;
+  ch.alive = liveAlive(r, ch.alive);
+  ch.round++;
+  ch.phase = 'music';
+  ch.stopAt = at + 4000 + crypto.randomInt(6000); // ما حدا بيعرف إيمتى
+  ch.n = Math.max(1, ch.alive.length - 1);
+  ch.seats = Array(ch.n).fill(null);
+  ch.layout = crypto.randomInt(1, 2 ** 30);
+  ch.frozen = {};
+  ch.sitAt = 0; ch.lastOut = null;
+}
+function chairsTick(r) {
+  const c = r.cur; if (!c || !c.chairs || r.phase !== 'play') return;
+  const ch = c.chairs, now = Date.now();
+  if (ch.phase === 'music' && now >= ch.stopAt) { ch.phase = 'sit'; ch.sitAt = now; broadcast(r, true); return; }
+  if (ch.phase === 'sit') {
+    const seated = ch.seats.filter(Boolean).length;
+    if (seated >= ch.n || now - ch.sitAt > 7000) {
+      const outs = ch.alive.filter(id => !ch.seats.includes(id));
+      ch.out.push(outs); ch.alive = ch.alive.filter(id => ch.seats.includes(id));
+      ch.phase = 'out'; ch.lastOut = outs; ch.outAt = now;
+      broadcast(r, true);
+    }
+    return;
+  }
+  if (ch.phase === 'out' && now - ch.outAt > 2800) {
+    if (liveAlive(r, ch.alive).length <= 1) { endChairs(r); return; }
+    chairsMusic(r, now + 400); broadcast(r, true);
+  }
+}
+function chairsSit(r, pid, idx) {
+  const c = r.cur; if (!c || c.game !== 'chairs' || r.phase !== 'play') return;
+  const ch = c.chairs, now = Date.now();
+  if (!ch.alive.includes(pid) || now < c.startAt) return;
+  if (ch.phase === 'music') { ch.frozen[pid] = ch.stopAt + 1200; broadcast(r, true); return; } // كبس بكّير = تجميد
+  if (ch.phase !== 'sit') return;
+  if ((ch.frozen[pid] || 0) > now) return;
+  if (ch.seats.includes(pid)) return;
+  if (idx < 0 || idx >= ch.n || ch.seats[idx]) return;
+  ch.seats[idx] = pid; broadcast(r, true); chairsTick(r);
+}
+function endChairs(r) {
+  const c = r.cur; if (!c || !c.chairs || r.phase !== 'play') return;
+  clearTimers(r);
+  elimResults(r, liveAlive(r, c.chairs.alive), c.chairs.out, id => (r.players[id] && r.players[id].gender === 'f') ? 'آخر وحدة قعدت 🪑' : 'آخر واحد قعد 🪑');
+  endRound(r);
 }
 function endTug(r) {
   const c = r.cur; if (!c || !c.tug) return;
-  for (const id of c.active) { const n = c.tug.taps[id] || 0; c.results[id] = { rk: n, label: `${n} شدّة`, done: true }; }
+  for (const id of c.active) { const n = c.tug.taps[id] || 0; c.results[id] = { rk: n, v: n, unit: 'شدّة', label: `${n} شدّة`, done: true }; }
   endRound(r);
 }
 function checkAllDone(r) {
@@ -269,16 +351,19 @@ function endRound(r) {
   }
   if (isTeamMode(r)) {
     const tms = teamsOf(r).map(tm => {
-      const mine = outcome.players.filter(p => r.players[p.id].team === tm.i);
-      const avg = mine.length ? mine.reduce((s, p) => s + p.pts, 0) / mine.length : -1;
-      return { id: tm.i, rk: Math.round(avg * 1000), playing: mine.length > 0 };
+      const mine = c.active.filter(id => r.players[id] && r.players[id].team === tm.i && c.results[id]);
+      if (!mine.length) return { id: tm.i, playing: false };
+      const avgRk = mine.reduce((a, id) => a + c.results[id].rk, 0) / mine.length;
+      const vs = mine.map(id => c.results[id].v).filter(v => typeof v === 'number');
+      const unit = (c.results[mine[0]] || {}).unit || '';
+      const avgV = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+      return { id: tm.i, rk: Math.round(avgRk * 100) / 100, playing: true, avgV, unit, n: mine.length };
     }).filter(t => t.playing);
     rankList(tms);
-    outcome.teams = tms.map(t => ({ team: t.id, place: t.place, pts: (TEAM_PTS[t.place] || 0) * mult }));
+    outcome.teams = tms.map(t => ({ team: t.id, place: t.place, pts: (TEAM_PTS[t.place] || 0) * mult, avg: t.avgV == null ? null : Math.round(t.avgV * 10) / 10, unit: t.unit, n: t.n }));
   }
   c.outcome = outcome;
   r.rounds.push({ n: c.n, game: c.game, mult, outcome, results: c.results });
-  if (r.settings.mode === 'relay') for (const tm of teamsOf(r)) r.relayIdx[tm.i] = (r.relayIdx[tm.i] || 0) + 1;
   r.pool = r.pool.filter(g => g !== c.game);
   r.phase = 'result';
   broadcast(r, true);
@@ -329,6 +414,7 @@ function hostAction(r, m, pid) {
       const allowed = ['mode', 'teamCount', 'gameCount', 'family', 'reveal', 'sessionName', 'sessionType'];
       if (r.phase !== 'lobby') { for (const k of ['sessionName', 'sessionType']) if (k in m.v) s[k] = String(m.v[k]).slice(0, 40); break; }
       for (const k of allowed) if (k in m.v) s[k] = m.v[k];
+      if (s.mode !== 'solo' && s.mode !== 'team') s.mode = 'team';
       s.teamCount = Math.min(4, Math.max(2, +s.teamCount || 2));
       s.gameCount = [3, 6, 9, 12].includes(+s.gameCount) ? +s.gameCount : 12;
       if (s.mode !== 'solo') { // ضمان إنو كل لاعب بفريق
@@ -349,7 +435,7 @@ function hostAction(r, m, pid) {
       const p = r.players[m.id]; if (!p || m.id === pid) break;
       p.kicked = true; p.connected = false; r.kicked.add(m.id);
       for (const [ws, meta] of sockets) if (meta.code === r.code && meta.pid === m.id) { send(ws, { t: 'kicked' }); meta.code = null; }
-      if (r.cur && r.cur.hat && r.cur.hat.holder === m.id) hatWatchdog(r);
+      if (r.phase === 'play') { if (r.cur.chairs) r.cur.chairs.alive = r.cur.chairs.alive.filter(x => x !== m.id); if (r.cur.hat) hatTick(r); checkAllDone(r); }
       break;
     }
     case 'makeHost': { const p = r.players[m.id]; if (p && !p.kicked && p.connected) { r.hostId = m.id; r.hostLeftAt = null; } break; }
@@ -374,7 +460,8 @@ function hostAction(r, m, pid) {
     case 'stopRound': {
       if (r.phase !== 'play') break;
       const c = r.cur;
-      if (c.game === 'hat') { clearTimers(r); c.endAt = Math.max(c.startAt, Date.now()); endHat(r); return; }
+      if (c.game === 'hat') { endHat(r); return; }
+      if (c.game === 'chairs') { endChairs(r); return; }
       if (c.game === 'tug') { endTug(r); return; }
       // نعطي الموبايلات لحظة لتبعت نتيجتها الجزئية
       clearTimers(r); c.endAt = Math.max(c.startAt, Date.now());
@@ -387,7 +474,6 @@ function hostAction(r, m, pid) {
       const g = r.cur.game;
       if (r.phase === 'result') {
         r.rounds.pop();
-        if (r.settings.mode === 'relay') for (const tm of teamsOf(r)) r.relayIdx[tm.i] = Math.max(0, (r.relayIdx[tm.i] || 1) - 1);
         if (!r.pool.includes(g)) r.pool.push(g);
       }
       bump('replays');
@@ -398,7 +484,7 @@ function hostAction(r, m, pid) {
     case 'next': { if (r.phase === 'result') { startWheel(r); return; } break; }
     case 'finish': { if (['intro', 'play', 'result'].includes(r.phase)) { clearTimeout(r._t.auto); finish(r); return; } break; }
     case 'revealMode': { if (r.phase === 'reveal') { r.revealMode = m.v === 'party' ? 'party' : 'all'; r.revealStep = r.revealMode === 'all' ? 999 : 0; if (r.revealMode === 'all') r.phase = 'final'; } break; }
-    case 'revealNext': { if (r.phase === 'reveal' && r.revealMode === 'party') { r.revealStep++; if (r.revealStep >= new Set(r.final.ranking.map(x => x.place)).size) r.phase = 'final'; } break; }
+    case 'revealNext': { if (r.phase === 'reveal' && r.revealMode === 'party') { r.revealStep++; if (r.revealStep > new Set(r.final.ranking.map(x => x.place)).size) r.phase = 'final'; } break; }
     case 'again': { // قعدة جديدة بنفس الناس
       clearTimers(r); clearTimeout(r._t.auto);
       for (const p of Object.values(r.players)) p.ready = false;
@@ -476,6 +562,11 @@ wss.on('connection', (ws) => {
       if (away && r.hostLeftAt && Date.now() - r.hostLeftAt >= HOST_GRACE_MS - 1500) { r.hostId = pid; r.hostLeftAt = null; broadcast(r, true); }
       return;
     }
+    if (m.t === 'teamName') {
+      const i = +m.i; const tm = teamsOf(r).find(t => t.i === i);
+      if (tm && (tm.leader === pid || r.hostId === pid)) { if (!r.settings.teams[i]) r.settings.teams[i] = {}; r.settings.teams[i].name = String(m.name || '').trim().slice(0, 24) || TEAM_NAMES[i]; broadcast(r, true); }
+      return;
+    }
     if (m.t === 'ready') {
       p.ready = !!m.v; broadcast(r, true);
       clearTimeout(r._t.auto);
@@ -512,7 +603,7 @@ wss.on('connection', (ws) => {
     if (m.t === 'prog') { c.prog[pid] = Math.max(0, Math.min(1, +m.p || 0)); broadcast(r); return; }
     if (m.t === 'result') {
       if (GAMES[c.game].server) return;
-      c.results[pid] = { rk: +m.rk || 0, label: String(m.label || '').slice(0, 30), done: !!m.done, final: true };
+      c.results[pid] = { rk: +m.rk || 0, v: typeof m.v === 'number' ? m.v : null, unit: String(m.unit || '').slice(0, 12), label: String(m.label || '').slice(0, 30), done: !!m.done, final: true };
       c.prog[pid] = m.done ? 1 : (c.prog[pid] || 0);
       broadcast(r); checkAllDone(r); return;
     }
@@ -522,6 +613,7 @@ wss.on('connection', (ws) => {
       c.tug.taps[pid] = (c.tug.taps[pid] || 0) + n; broadcast(r); return;
     }
     if (m.t === 'hatPass') { hatPass(r, pid, String(m.to)); return; }
+    if (m.t === 'sit') { chairsSit(r, pid, +m.i); return; }
   });
   ws.on('close', () => {
     const meta = sockets.get(ws); sockets.delete(ws);
@@ -549,7 +641,7 @@ app.get('/qr/:code.svg', async (req, res) => {
 app.get('/healthz', (req, res) => res.send('ok'));
 
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-const GAME_AR = { cassette: 'لفّ الكاسيت', antenna: 'ظبّط الأنتين', rotary: 'التلفون أبو دولاب', t9: 'رسالة T9', top: 'البلبل', marbles: 'الكلل', hat: 'طاق طاق طاقية', tug: 'شدّ الحبل', stones: 'السبع حجار', hoop: 'الدولاب والعصاية', qabban: 'القبّان', jumprope: 'نطّ الحبل' };
+const GAME_AR = { cassette: 'لفّ الكاسيت', antenna: 'ظبّط الأنتين', rotary: 'التلفون أبو دولاب', t9: 'رسالة T9', chairs: 'الكراسي الموسيقية', marbles: 'الكلل', hat: 'طاق طاق طاقية', tug: 'شدّ الحبل', stones: 'السبع حجار', hoop: 'الدولاب والعصاية', qabban: 'القبّان', jumprope: 'نطّ الحبل' };
 const MODE_AR = { solo: 'فردي', team: 'الفريق كاملاً', relay: 'عضو لكل جولة' };
 function statsPage(admin) {
   const days = Object.entries(stats.days || {}).sort().slice(-14);

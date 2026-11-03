@@ -403,3 +403,84 @@ body.has-end .tt-word{display:none}
 .tug-low{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 .tug-low .tug-btn{width:min(46%,170px)}
 .tug-low .tug-count{font-size:20px}
+
+/* T9 حروف لاتينية متل النوكيا */
+.t9-keys .k em{font-style:normal;font-size:9.5px;font-weight:700;opacity:.55;letter-spacing:.5px;font-family:ui-monospace,monospace;line-height:1}
+.t9-keys .k{padding:4px 2px 3px}
+/* متوسط الفريق */
+.rk .avg{display:block;font-style:normal;font-weight:700;font-size:13px;color:var(--c0)}
+
+/* طاق طاق طاقية — الجديدة */
+.hat2{position:absolute;inset:0;color:#F3EAD8}
+.hat-top{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;font-weight:700;font-size:13px;z-index:2}
+.hat-top span{background:rgba(15,20,36,.7);border-radius:12px;padding:2px 10px}
+.hat2 .hat-ring{position:absolute;inset:9% 6% 22%}
+.hp{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:#F3EAD8;font-weight:700;font-size:12px;transition:transform .2s,opacity .3s;padding:14px 4px 2px}
+.hp .av{box-shadow:0 0 0 3px var(--pc)}
+.hp-n{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hp.me .hp-n{color:var(--c4)}
+.hp-hat{position:absolute;top:-16px;left:50%;width:44px;height:44px;margin-left:-22px;display:none;font-style:normal}
+.hp-hat svg:first-child{position:absolute;inset:7px;width:30px;height:30px}
+.hp.has .hp-hat{display:block;animation:bob .9s ease-in-out infinite}
+.hp.hot .hp-hat{animation:shake .15s infinite}
+.fuse{position:absolute;inset:0;width:44px;height:44px;transform:rotate(-90deg)}
+.fuse circle{fill:none;stroke:var(--heat,var(--c4));stroke-width:4;stroke-dasharray:107;stroke-dashoffset:0;stroke-linecap:round;transition:stroke .3s}
+.hp.can .av{box-shadow:0 0 0 4px var(--c4),0 0 0 9px rgba(242,193,78,.3);animation:glow 1s infinite}
+.hp.can{transform:translate(-50%,-50%) scale(1.06)}
+.hp.out{opacity:.28;filter:grayscale(1)}
+.hp.burn .av{animation:burn .5s ease-in-out 4;filter:none}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes shake{25%{transform:translateX(-2px) rotate(-6deg)}75%{transform:translateX(2px) rotate(6deg)}}
+@keyframes burn{50%{box-shadow:0 0 0 6px var(--c2),0 0 22px 8px rgba(238,123,48,.8)}}
+.hat2 .hat-say{position:absolute;left:0;right:0;top:44%;text-align:center;font-family:var(--tf);font-weight:600;font-size:30px;color:var(--c4);pointer-events:none}
+.hat2.mine .hat-say{animation:pulse .6s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.hat2 .hat-msg{position:absolute;bottom:12px;left:10px;right:10px;text-align:center;font-weight:600;font-size:14.5px}
+.hat2 .hat-msg b{color:var(--c4)}
+
+/* الكراسي الموسيقية */
+.ch{position:absolute;inset:0;color:#F3EAD8}
+.ch-top{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;font-weight:700;font-size:13px;z-index:2}
+.ch-top span{background:rgba(15,20,36,.7);border-radius:12px;padding:2px 10px}
+.ch-ring{position:absolute;inset:10% 5% 20%}
+.chair{position:absolute;transform:translate(-50%,-50%);width:64px;height:70px;background:none;border:0;padding:0;transition:transform .15s,opacity .2s;touch-action:manipulation}
+.chair>svg{width:100%;height:100%}
+.chair .seat{position:absolute;left:50%;top:22%;transform:translateX(-50%)}
+.ch[data-phase="music"] .chair{opacity:.6;animation:sway 1.2s ease-in-out infinite}
+.ch[data-phase="sit"] .chair:not(.taken){animation:ready .4s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(242,193,78,.9))}
+.chair.taken{opacity:.95}
+.chair.mine .seat .av{box-shadow:0 0 0 4px var(--c4)}
+@keyframes sway{50%{transform:translate(-50%,-50%) rotate(4deg)}}
+@keyframes ready{50%{transform:translate(-50%,-50%) scale(1.1)}}
+.ch-center{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.ch-notes{font-size:28px;letter-spacing:6px;opacity:0;color:var(--c4)}
+.ch[data-phase="music"] .ch-notes{opacity:1;animation:notes 1s linear infinite}
+@keyframes notes{0%{transform:translateY(4px)}50%{transform:translateY(-6px)}100%{transform:translateY(4px)}}
+.ch-say{font-family:var(--tf);font-weight:600;font-size:34px;color:var(--c4)}
+.ch[data-phase="sit"] .ch-say{font-size:52px;color:var(--c2);animation:pulse .4s infinite}
+.ch.frozen .ch-ring{filter:grayscale(1) brightness(.7)}
+.ch-msg{position:absolute;bottom:12px;left:10px;right:10px;text-align:center;font-weight:600;font-size:14.5px}
+.ch-msg b{color:var(--c4)}
+
+/* الكشف الدرامي */
+.rv-tv{margin:14px auto 0;max-width:380px;background:var(--c0);border:3px solid var(--line);border-radius:30px;padding:14px;box-shadow:7px 7px 0 var(--line);display:flex;gap:12px;align-items:center}
+.rv-tv.silver{background:var(--c3)}
+.rv-tv.gold{background:var(--c4);animation:wob 2s ease-in-out infinite}
+.rv-screen{flex:1;aspect-ratio:3/4;border-radius:20px;background:var(--screen);border:3px solid var(--line);position:relative;overflow:hidden}
+.rv-screen::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 2px,transparent 2px 4px);pointer-events:none}
+.rv-screen canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;opacity:.85;transition:opacity .25s}
+.rv-knobs{display:flex;flex-direction:column;gap:12px}.rv-knobs i{width:20px;height:20px;border-radius:50%;background:var(--card);border:3px solid var(--line)}
+.rv-in{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#F3EAD8;text-align:center;padding:12px}
+.rv-q{font-family:var(--tf);font-size:110px;color:var(--c4)}
+.rv-drum{font-size:60px;display:flex;flex-direction:column;gap:10px;animation:shake .12s infinite}
+.rv-drum b{font-family:var(--tf);font-weight:600;font-size:26px;color:var(--c4);text-shadow:0 2px 0 #000}
+.rv-card{animation:popIn .6s cubic-bezier(.3,1.6,.6,1)}
+.rv-pl{font-size:54px;font-family:var(--tf);color:var(--c4);line-height:1}
+.rv-avs{display:flex;gap:10px;justify-content:center;margin:8px 0}
+.rv-avs .av{box-shadow:0 0 0 5px var(--c4)}
+.rv-avs .av+.av{width:110px!important;height:110px!important}
+.rv-card h2{font-family:var(--tf);font-weight:600;font-size:30px;margin:6px 0 2px}
+.rv-card small{display:inline-block;background:var(--c4);color:#1B2238;border-radius:20px;padding:2px 12px;font-weight:700;font-size:14px}
+.rv-pts{margin-top:8px;font-weight:700}.rv-pts b{font-family:ui-monospace,monospace;font-size:30px;color:var(--c4)}
+.rv-team{font-family:var(--tf);font-weight:600;font-size:30px;background:var(--pc);color:#1B2238;border:3px solid #05070D;border-radius:16px;padding:14px 18px}
+.rv-done{margin-top:16px}

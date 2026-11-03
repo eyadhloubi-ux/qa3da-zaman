@@ -24,6 +24,8 @@
     hoop: '<svg viewBox="0 0 48 48"><circle cx="20" cy="27" r="15" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="20" cy="27" r="15" fill="none" stroke="var(--c0)" stroke-width="2.4"/><path d="M44 6L30 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M44 6L30 24" stroke="var(--c4)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 44h40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".4"/></svg>',
     qabban: '<svg viewBox="0 0 48 48"><path d="M24 4v6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="4" r="2.5" fill="currentColor"/><path d="M6 14h38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M6 14h38" stroke="var(--c4)" stroke-width="1.6" stroke-dasharray="2 4"/><path d="M10 14l-4 14M10 14l4 14" stroke="currentColor" stroke-width="2"/><path d="M2 28h16a8 6 0 0 1-16 0z" fill="var(--c6)" stroke="currentColor" stroke-width="2.5"/><path d="M36 14v8" stroke="currentColor" stroke-width="2.5"/><rect x="31" y="22" width="10" height="12" rx="3" fill="var(--c1)" stroke="currentColor" stroke-width="2.5"/></svg>',
     jumprope: '<svg viewBox="0 0 48 48"><path d="M6 14C6 46 42 46 42 14" fill="none" stroke="var(--c2)" stroke-width="3.5" stroke-linecap="round"/><rect x="3" y="7" width="6" height="10" rx="2" fill="var(--c4)" stroke="currentColor" stroke-width="2.4"/><rect x="39" y="7" width="6" height="10" rx="2" fill="var(--c4)" stroke="currentColor" stroke-width="2.4"/><circle cx="24" cy="10" r="4.5" fill="currentColor"/><path d="M24 15v11M24 19l-6 4M24 19l6 4M24 26l-5 7M24 26l5 7" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+    chairs: '<svg viewBox="0 0 48 48"><path d="M14 6h20v18H14z" fill="var(--c2)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M10 24h28v6H10z" fill="var(--c4)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M13 30v14M35 30v14M17 24v-4M31 24v-4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M40 6l4-2v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="41" cy="13" r="2.6" fill="currentColor"/></svg>',
+    chair: '<svg viewBox="0 0 48 48"><path d="M14 4h20v20H14z" fill="#C9A774" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><path d="M14 10h20M14 16h20" stroke="#8A6A3E" stroke-width="2"/><path d="M9 24h30v7H9z" fill="#D9B27C" stroke="#0A0E19" stroke-width="3" stroke-linejoin="round"/><path d="M12 31v14M36 31v14" stroke="#0A0E19" stroke-width="3.5" stroke-linecap="round"/></svg>',
     help: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4.3 2.6c-1 .6-1.5 1.1-1.5 2.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor"/></svg>',
     moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>',
     sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>',
@@ -35,7 +37,7 @@
     share: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
-  const GAME_ORDER = ['cassette', 'antenna', 'rotary', 't9', 'top', 'marbles', 'hat', 'tug', 'stones', 'hoop', 'qabban', 'jumprope'];
+  const GAME_ORDER = ['cassette', 'antenna', 'rotary', 't9', 'chairs', 'marbles', 'hat', 'tug', 'stones', 'hoop', 'qabban', 'jumprope'];
   const NG = GAME_ORDER.length, STEP = 360 / NG;
 
   // ───────── الحالة ─────────
@@ -146,9 +148,6 @@
       }
     }
     if (screen && screen.spinning) { hostAwayBanner(); return; }
-    if (S.phase === 'final' && prev && prev.phase === 'reveal' && prev.revealMode === 'party' && !finalAnimDone) {
-      finalAnimDone = true; showScreen(drumrollScreen(() => { screen = null; render(); })); return;
-    }
     if (screen && screen.drum) return;
     if (S.phase === 'intro') key = 'intro:' + c.n + ':' + c.seed;
     else if (S.phase === 'play') key = 'play:' + c.n + ':' + c.seed;
@@ -188,7 +187,7 @@
         </div>
         <h1 class="title">قعدة زمان</h1>
         <p class="sub">ألعاب من أيام الكاسيت والحارة</p>
-        <div class="ticker"><div>${('<span>رجّع الشريط بالقلم · ظبّط الأنتين · دوّر الرقم عالدولاب · اكتب رسالة بالأزرار · لفّ البلبل · ارمي الكلّة · طاق طاق طاقية · شدّ الحبل · عمّر السبع حجار · سوق الدولاب بالعصاية · وزّن عالقبّان · نطّ الحبل ·</span>').repeat(2)}</div></div>
+        <div class="ticker"><div>${('<span>رجّع الشريط بالقلم · ظبّط الأنتين · دوّر الرقم عالدولاب · اكتب رسالة بالأزرار · ارمي الكلّة · طاق طاق طاقية · شدّ الحبل · اقعد عالكرسي · عمّر السبع حجار · سوق الدولاب بالعصاية · وزّن عالقبّان · نطّ الحبل ·</span>').repeat(2)}</div></div>
         <div class="cover-actions">
           <button class="btn big" id="newBtn">افتح قعدة جديدة</button>
           <div class="join-row"><input id="codeIn" maxlength="5" placeholder="الكود" autocomplete="off" dir="ltr" inputmode="text"><button class="btn ghost" id="joinBtn">فوت</button></div>
@@ -283,8 +282,8 @@
     }
     function renderHostSet() {
       const box = $('#hostSet', e); const s = S.settings;
-      if (!isHost()) { box.innerHTML = `<div class="card mode-info"><b>${{ solo: 'فردي: كل واحد لحالو', team: 'فرق: الفريق كله بيلعب', relay: 'فرق: كل جولة عضو من كل فريق' }[s.mode]}</b><small>${s.gameCount} ألعاب${s.family ? ' · وضع العيلة' : ''}</small></div>`; return; }
-      box.innerHTML = `<div class="card"><div class="fld"><span>طريقة اللعب</span><div class="seg three" id="md"><button data-v="solo">فردي</button><button data-v="team">الفريق كله</button><button data-v="relay">عضو كل جولة</button></div></div>
+      if (!isHost()) { box.innerHTML = `<div class="card mode-info"><b>${(s.mode === 'solo' ? 'فردي: كل واحد لحالو' : 'فرق: نتيجة الفريق = متوسط نتايج أعضاءه')}</b><small>${s.gameCount} ألعاب${s.family ? ' · وضع العيلة' : ''}</small></div>`; return; }
+      box.innerHTML = `<div class="card"><div class="fld"><span>طريقة اللعب</span><div class="seg" id="md"><button data-v="solo">فردي</button><button data-v="team">فرق</button></div></div>
         ${s.mode !== 'solo' ? `<div class="fld"><span>عدد الفرق</span><div class="seg" id="tc">${[2, 3, 4].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>` : ''}
         <div class="fld"><span>كم لعبة؟</span><div class="seg" id="gc">${[3, 6, 9, 12].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div></div>
         <div class="fld"><span>كشف النتيجة</span><div class="seg" id="rv"><button data-v="now">بعد كل لعبة</button><button data-v="end">بالآخر</button></div></div>
@@ -306,11 +305,11 @@
       if (!isTeam()) box.innerHTML = `<div class="card"><div class="ph"><b>اللي بالقعدة (${ids.length})</b><button class="link" id="editMe">عدّل معلوماتي</button></div><div class="pgrid">${ids.map(chip).join('')}</div></div>`;
       else {
         box.innerHTML = `<div class="ph out"><b>الفرق (${ids.length} لاعب)</b><span>${isHost() ? '<button class="link" id="shuf">فرز عشوائي</button> · ' : ''}<button class="link" id="editMe">عدّل معلوماتي</button></span></div><div class="teams">${S.teams.map(t => `
-          <div class="team" style="--pc:var(--tc${t.i})"><div class="team-h"><b class="tn" data-i="${t.i}">${esc(t.name)}</b>${isHost() ? '<button class="link sm tn-ed" data-i="' + t.i + '">✎</button>' : ''}</div>
+          <div class="team" style="--pc:var(--tc${t.i})"><div class="team-h"><b class="tn" data-i="${t.i}">${esc(t.name)}</b>${(isHost() || t.leader === pid) ? '<button class="link sm tn-ed" data-i="' + t.i + '">✎ الاسم</button>' : ''}</div>
           <div class="pgrid">${t.members.map(chip).join('') || '<small class="empty">لسّا ما في حدا</small>'}</div>
           ${me().team !== t.i ? `<button class="btn ghost sm jn" data-i="${t.i}">انضم لهون</button>` : '<small class="here">إنت بهالفريق</small>'}</div>`).join('')}</div>`;
         $$('.jn', box).forEach(b => b.onclick = () => send({ t: 'profile', team: +b.dataset.i }));
-        $$('.tn-ed', box).forEach(b => b.onclick = () => { const i = +b.dataset.i; sheet(`<h3>اسم الفريق</h3><input id="tnIn" maxlength="24" value="${esc(teamName(i))}"><button class="btn" id="tnOk">حفظ</button>`, (s, close) => { $('#tnOk', s).onclick = () => { host('teamName', { i, name: $('#tnIn', s).value.trim() }); close(); }; }); });
+        $$('.tn-ed', box).forEach(b => b.onclick = () => { const i = +b.dataset.i; sheet(`<h3>اسم الفريق</h3><input id="tnIn" maxlength="24" value="${esc(teamName(i))}"><button class="btn" id="tnOk">حفظ</button>`, (s, close) => { $('#tnOk', s).onclick = () => { send({ t: 'teamName', i, name: $('#tnIn', s).value.trim() }); close(); }; }); });
         const sh = $('#shuf', box); if (sh) sh.onclick = () => host('shuffleTeams');
       }
       $('#editMe', box).onclick = () => { wantProfile = true; screen = null; render(); };
@@ -395,10 +394,7 @@
   }
 
   // ═════════════ تقديم اللعبة ═════════════
-  function relayActive() {
-    if (S.settings.mode !== 'relay') return null;
-    return S.teams.filter(t => t.members.length).map(t => t.members[((S.relayIdx || {})[t.i] || 0) % t.members.length]);
-  }
+  function relayActive() { return null; }
   function factOf(g, seed) { const f = META[g].facts; return f[seed % f.length]; }
   function introScreen(key) {
     const c = S.cur, M = META[c.game];
@@ -451,9 +447,9 @@
     const sc = { key, el: e }; let mod = null, finished = false, forced = false, tmIv;
     const X = {
       seed: c.seed, rng: mulberry32(c.seed), now, startAt: c.startAt, endAt: c.endAt, me: pid,
-      finish(r) { if (finished) return; finished = true; send({ t: 'result', rk: r.rk, label: r.label, done: r.done }); showDone(r); },
+      finish(r) { if (finished) return; finished = true; send({ t: 'result', rk: r.rk, label: r.label, done: r.done, v: r.v, unit: r.unit }); showDone(r); },
       prog(p) { send({ t: 'prog', p }); },
-      tap(n) { send({ t: 'tap', n }); }, hatPass(to) { send({ t: 'hatPass', to }); },
+      tap(n) { send({ t: 'tap', n }); }, hatPass(to) { send({ t: 'hatPass', to }); }, sit(i) { send({ t: 'sit', i }); }, mulberry: mulberry32,
       icon: n => I[n], avatar, esc, nameOf, player: id => S.players[id], teamOf: id => S.players[id] && S.players[id].team, teamName, isTeam: isTeam(), g: myG, active,
     };
     function showDone(r) {
@@ -470,18 +466,18 @@
     function spect() {
       const box = $('#spect', e);
       if (active || isServerGame) { if (!finished) box.innerHTML = ''; return; }
-      box.innerHTML = `<div class="card"><b>${S.settings.mode === 'relay' ? 'مو دورك هالجولة — شجّع فريقك!' : 'إنت عم تتفرّج هالجولة'}</b></div>`;
+      box.innerHTML = `<div class="card"><b>إنت عم تتفرّج هالجولة</b></div>`;
       const d = document.createElement('div'); d.id = 'live'; box.firstChild.appendChild(d); liveBars();
     }
     function hctl() {
       const box = $('#hctl', e);
-      box.innerHTML = isHost() ? `<div class="hbar"><button class="link" id="rp">إعادة اللعبة</button><button class="link" id="st">وقّف اللعبة</button></div>` : '';
+      box.innerHTML = isHost() ? `<div class="hbar"><button class="link" id="rp">إعادة اللعبة</button><button class="btn sm red" id="st">سكّر اللعبة</button></div>` : '';
       const rp = $('#rp', box); if (rp) rp.onclick = () => confirmBox('نعيد اللعبة؟ النتيجة بتنلغى.', 'نعيد', () => host('replay'));
-      const st = $('#st', box); if (st) st.onclick = () => confirmBox('نوقّف اللعبة هون ونحسب النتيجة؟', 'وقّف', () => host('stopRound'));
+      const st = $('#st', box); if (st) st.onclick = () => confirmBox('نسكّر اللعبة هلأ؟ كل واحد بتنحسبله النتيجة اللي وصلها.', 'سكّر', () => host('stopRound'));
     }
     function tick() {
       const tm = $('#tm', e); const left = c.endAt - now();
-      if (c.game === 'hat') tm.textContent = now() < c.startAt ? '' : '⏳ ؟؟';
+      if (!c.endAt) { tm.textContent = now() < c.startAt ? '' : '∞'; tm.title = 'بلا وقت: لحد ما يبقى واحد'; }
       else tm.textContent = now() < c.startAt ? '' : Math.max(0, Math.ceil(left / 1000)) + ' ث';
       const cd = $('#count', e); const toStart = c.startAt - now();
       if (toStart > 0) { const n = Math.ceil(toStart / 1000); if (cd.dataset.n !== String(n)) { cd.dataset.n = n; cd.innerHTML = `<b>${n}</b>`; cd.hidden = false; beep(440, 0.08, 'square', 0.04); } }
@@ -516,7 +512,7 @@
     } else if (!isTeam()) {
       body = `<div class="card rank">${o.players.map(p => `<div class="rk ${p.id === pid ? 'me' : ''}">${placeBadge(p.place)}${avatar(p.id, 36)}<span class="nm">${esc(nameOf(p.id))}<small>${esc(resultLabel(p.id, p))}</small></span><b class="pts">+${p.pts}</b></div>`).join('')}</div>`;
     } else {
-      body = `<div class="card rank">${o.teams.map(t => `<div class="rk team-rk" style="--pc:var(--tc${t.team})">${placeBadge(t.place)}<span class="tdot"></span><span class="nm">${esc(teamName(t.team))}<small>${o.players.filter(p => S.players[p.id] && S.players[p.id].team === t.team).map(p => esc(nameOf(p.id)) + ': ' + esc(resultLabel(p.id, p))).join(' · ')}</small></span><b class="pts">+${t.pts}</b></div>`).join('')}</div>`;
+      body = `<div class="card rank">${o.teams.map(t => `<div class="rk team-rk" style="--pc:var(--tc${t.team})">${placeBadge(t.place)}<span class="tdot"></span><span class="nm">${esc(teamName(t.team))}${t.avg != null ? `<em class="avg">المتوسط: <bdi>${t.avg}</bdi> ${esc(t.unit || '')}</em>` : ''}<small>${o.players.filter(p => S.players[p.id] && S.players[p.id].team === t.team).map(p => esc(nameOf(p.id)) + ': ' + esc(resultLabel(p.id, p))).join(' · ')}</small></span><b class="pts">+${t.pts}</b></div>`).join('')}</div>`;
     }
     const e = el(`<section class="result"><p class="step">${I[c.game]} نتيجة «${M.name}»${o.mult > 1 ? ' · دبل 🔥' : ''}</p>${body}
       <div class="fact"><div class="fact-h">كانت زمان…</div><p>${esc(factOf(c.game, c.seed))}</p></div>
@@ -554,28 +550,71 @@
   // ═════════════ الكشف ═════════════
   function revealScreen(key) {
     const e = el(`<section class="reveal"><div id="rv"></div></section>`);
-    const sc = { key, el: e };
+    const sc = { key, el: e, anim: -1 };
+    let timers = [];
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    sc.destroy = () => { timers.forEach(clearTimeout); if (sc.stopRaf) sc.stopRaf(); };
+    function who(r) { return r.team != null ? { name: teamName(r.team), av: `<div class="rv-team" style="--pc:var(--tc${r.team})">${esc(teamName(r.team))}</div>` } : { name: nameOf(r.id), av: avatar(r.id, 150) }; }
     function upd() {
       const box = $('#rv', e); const rows = finalRows();
       if (!S.revealMode) {
+        sc.anim = -1;
         box.innerHTML = `<div class="tvcard"><div class="g-ic">${I.tv}</div><h2>خلصت الألعاب!</h2><p class="how">مين رح ${isTeam() ? 'يكونوا زعماء' : 'يكون زعيم'} الحارة؟</p></div>` +
           (isHost() ? `<button class="btn big" id="party">حفلة كشف 🎉</button><button class="btn ghost wide" id="all">كشف دفعة وحدة</button>` : `<div class="wait"><span class="dots"><i></i><i></i><i></i></span> ${esc(gend(S.hostId, 'الريس', 'الريسة'))} عم يجهّز الكشف</div>`);
         const p = $('#party', box), a = $('#all', box); if (p) p.onclick = () => host('revealMode', { v: 'party' }); if (a) a.onclick = () => host('revealMode', { v: 'all' });
         return;
       }
-      // الكشف حسب المراكز: من الأخير للأول، واللي متعادلين بينكشفوا سوا
+      // الكشف حسب المراكز: من الأخير للأول، كل مركز لحاله على شاشة التلفزيون
       const places = [...new Set(rows.map(r => r.place))].sort((x, y) => y - x);
-      const shownN = Math.min(S.revealStep, places.length);
-      const shown = new Set(places.slice(0, shownN));
-      const nextPlace = places[shownN];
-      const justShown = shownN > 0 ? places[shownN - 1] : null;
-      const hiddenRow = () => `<div class="rk hid"><span class="qmark">؟</span><span class="nm">مين؟<small>لسّا ما انكشف</small></span><b class="pts">—</b></div>`;
-      const list = rows.map(r => shown.has(r.place) ? rowHtml(r).replace('class="rk', 'class="rk' + (r.place === justShown ? ' pop' : '')) : hiddenRow()).join('');
-      const btnTxt = nextPlace === 0 ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : (shownN === 0 ? 'ابدأ الكشف: المركز ' + (nextPlace + 1) : 'كشف المركز ' + (nextPlace + 1));
-      box.innerHTML = `<p class="step">حفلة الكشف</p><div class="card rank rev">${list}</div>` +
-        (isHost() ? `<button class="btn big" id="nx">${btnTxt}</button>` : `<div class="wait">${nextPlace === 0 ? '🥁 هلأ الزعيم…' : 'ناطرين الكشف الجاي…'}</div>`);
-      const nx = $('#nx', box); if (nx) nx.onclick = () => { nx.disabled = true; host('revealNext'); };
-      if (justShown != null && sc._last !== shownN) { sc._last = shownN; beep(justShown === 0 ? 880 : 520, 0.12, 'triangle', 0.05); }
+      const step = Math.min(S.revealStep, places.length);
+      if (sc.anim === step && box.firstChild) { ctl(places, step); return; }
+      sc.anim = step;
+      timers.forEach(clearTimeout); timers = []; if (sc.stopRaf) sc.stopRaf();
+      const place = step > 0 ? places[step - 1] : null;
+      const group = place == null ? [] : rows.filter(r => r.place === place);
+      const done = rows.filter(r => step > 0 && places.slice(0, step - 1).includes(r.place)).sort((x, y) => x.place - y.place);
+      const top = place === 0, podium = place != null && place <= 2;
+      box.innerHTML = `<p class="step">حفلة الكشف · ${step ? (top ? 'المركز الأول' : 'المركز ' + (place + 1)) : 'جاهزين؟'}</p>
+        <div class="rv-tv ${top ? 'gold' : podium ? 'silver' : ''}"><div class="rv-screen"><canvas class="static"></canvas><div class="rv-in"></div></div><div class="rv-knobs"><i></i><i></i></div></div>
+        <div id="rvctl"></div>
+        ${done.length ? `<div class="card rank rv-done">${done.map(rowHtml).join('')}</div>` : ''}`;
+      const cv = $('.static', box), cx = cv.getContext('2d'); cv.width = 90; cv.height = 68; const img = cx.createImageData(90, 68);
+      let stOn = true, raf;
+      const f = () => { if (stOn) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 200; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } cx.putImageData(img, 0, 0); } raf = requestAnimationFrame(f); }; f();
+      sc.stopRaf = () => cancelAnimationFrame(raf); const stopStatic = () => { stOn = false; cancelAnimationFrame(raf); cv.style.opacity = 0; };
+      const inn = $('.rv-in', box);
+      if (!step) { inn.innerHTML = `<div class="rv-q">؟</div>`; ctl(places, step); return; }
+      // طبل: كل ما قرّبنا من الأول بيطول
+      const drum = top ? 4200 : podium ? 2600 : 1400;
+      inn.innerHTML = `<div class="rv-drum">🥁<b>${top ? 'والزعيم هو…' : 'المركز ' + (place + 1)}</b></div>`;
+      let k = 0; const t0 = performance.now();
+      const roll = () => { const el2 = performance.now() - t0; if (el2 > drum) return; beep(180 + (el2 / drum) * 260, 0.03, 'square', 0.035); k++; later(roll, Math.max(45, 220 - el2 / drum * 180)); };
+      roll();
+      sc.busy = true; ctl(places, step);
+      later(() => {
+        stopStatic(); sc.busy = false;
+        const g0 = group[0]; const w0 = who(g0);
+        inn.innerHTML = `<div class="rv-card">
+            <div class="rv-pl">${place < 3 ? ['🥇', '🥈', '🥉'][place] : '#' + (place + 1)}</div>
+            <div class="rv-avs">${group.map(r => who(r).av).join('')}</div>
+            <h2>${group.map(r => esc(who(r).name)).join(' و ')}</h2>
+            <small>${esc(g0.title)}${group.length > 1 ? ' · تعادل!' : ''}</small>
+            <div class="rv-pts"><b data-to="${g0.pts}">0</b> نقطة</div></div>`;
+        const pb = $('.rv-pts b', inn); const to = g0.pts, t1 = performance.now();
+        const cnt = () => { const p = Math.min(1, (performance.now() - t1) / 900); pb.textContent = Math.round(to * p); if (p < 1) requestAnimationFrame(cnt); }; cnt();
+        beep(top ? 880 : 620, top ? 0.5 : 0.2, 'triangle', 0.06); buzz(top ? [80, 40, 80, 40, 160] : [60]);
+        if (top) { confetti(220); later(() => confetti(160), 700); } else if (podium) confetti(70);
+        ctl(places, step);
+      }, drum);
+    }
+    function ctl(places, step) {
+      const box = $('#rvctl', e); if (!box) return;
+      const nextPlace = places[step];
+      if (!isHost()) { box.innerHTML = sc.busy ? '' : `<div class="wait">${step >= places.length ? 'ناطرين النتيجة الكاملة…' : 'ناطرين الكشف الجاي…'}</div>`; return; }
+      if (sc.busy) { box.innerHTML = ''; return; }
+      const txtB = step >= places.length ? 'النتيجة الكاملة' : nextPlace === 0 ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : (step === 0 ? 'ابدأ: المركز ' + (nextPlace + 1) : 'الجاي: المركز ' + (nextPlace + 1));
+      box.innerHTML = `<button class="btn big" id="nx">${txtB}</button>`;
+      $('#nx', box).onclick = (ev) => { ev.target.disabled = true; host('revealNext'); };
     }
     sc.mounted = upd; sc.update = upd;
     return sc;
@@ -610,7 +649,7 @@
       ${fam ? `<div class="card fam"><b>جيل الكاسيت ضد جيل الموبايل</b><div class="fam-bar"><i style="width:${fam.pctOld}%"></i></div><div class="fam-l"><span>📼 الكاسيت <bdi dir="ltr">${fam.pctOld}%</bdi></span><span>الموبايل <bdi dir="ltr">${100 - fam.pctOld}%</bdi> 📱</span></div><small>${fam.pctOld === 50 ? 'تعادل! الجيلين قدّ بعض' : (fam.pctOld > 50 ? 'جيل الكاسيت لسّا ماسك الحارة' : 'جيل الموبايل سحب البساط')}</small></div>` : ''}
       <details class="card rounds"><summary>كل الألعاب بالتفصيل</summary>${S.rounds.map(rd => `<div class="rd"><b>${I[rd.game]} ${META[rd.game].name}${rd.mult > 1 ? ' · دبل' : ''}</b><small>${isTeam() ? rd.outcome.teams.map(t => (t.place + 1) + '. ' + esc(teamName(t.team))).join(' · ') : rd.outcome.players.slice(0, 5).map(p => (p.place + 1) + '. ' + esc(nameOf(p.id)) + ' (' + esc(resultLabel2(rd, p)) + ')').join(' · ')}</small></div>`).join('') || '<small>ما انلعبت ألعاب</small>'}</details>
       <div class="card sessc"><div class="gp" data-group data-empty="">${groupPhoto ? `<img src="${groupPhoto}">` : ''}</div><div><small>${esc(S.settings.sessionType)}</small><b>${esc(S.settings.sessionName)}</b></div><button class="link" id="edS" ${isHost() ? '' : 'hidden'}>تعديل</button></div>
-      <div class="card story"><b>صورتك للستوري</b><div class="seg three" id="fmt"><button data-v="album">ألبوم</button><button data-v="ticket">تذكرة</button><button data-v="tape">كاسيت</button></div><div class="seg" id="thm"><button data-v="light">فاتح</button><button data-v="dark">داكن</button></div>
+      <div class="card story"><b>صورتك للستوري</b><div class="seg three" id="fmt"><button data-v="cover">غلاف</button><button data-v="polaroid">بولاريد</button><button data-v="card">كرت</button></div><div class="seg" id="thm"><button data-v="light">فاتح</button><button data-v="dark">داكن</button></div>
         <div class="story-prev"><canvas id="storyCv" width="1080" height="1920"></canvas></div>
         <div class="row2"><button class="btn" id="dl">${I.dl} حمّل الصورة</button><button class="btn ghost" id="sh">${I.share} شارك</button></div></div>
       <a class="btn ghost wide" href="${IG}" target="_blank" rel="noopener" id="ig">شارك مع صحابك</a>
@@ -618,7 +657,7 @@
       <div id="hostEnd"></div>
       <p class="sig"><bdi dir="ltr">@eyad.hloubi</bdi> · صار بدها قعدة.</p></section>`);
     const sc = { key, el: e };
-    let fmt = 'album', thm = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    let fmt = 'cover', thm = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     function paintStory() {
       $$('#fmt button', e).forEach(b => b.classList.toggle('on', b.dataset.v === fmt));
       $$('#thm button', e).forEach(b => b.classList.toggle('on', b.dataset.v === thm));
@@ -675,90 +714,168 @@
   // ═════════════ صورة الستوري ═════════════
   const imgCache = {};
   function loadImg(src) { if (!src) return Promise.resolve(null); if (imgCache[src]) return imgCache[src]; return (imgCache[src] = new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; })); }
+  // أيقونات الألعاب كصور للستوري
+  const iconCache = {};
+  function iconImg(g) {
+    if (iconCache[g]) return iconCache[g];
+    const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    let svg = I[g] || I.tv;
+    svg = svg.replace(/var\(--(c\d|paper)\)/g, (m, v) => css('--' + v) || '#F2C14E').replace(/currentColor/g, '#0A0E19').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" ');
+    return (iconCache[g] = loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)));
+  }
+  function myWins() {
+    let w = 0;
+    for (const rd of S.rounds) {
+      if (isTeam()) { const t = rd.outcome.teams.find(x => x.place === 0); if (t && t.team === me().team) w++; }
+      else { const p = rd.outcome.players.find(x => x.id === pid); if (p && p.place === 0) w++; }
+    }
+    return w;
+  }
+  function bestGameId(id) {
+    let best = null;
+    for (const rd of S.rounds) { const p = rd.outcome.players.find(x => x.id === id); if (!p) continue; const rank = p.place / Math.max(1, rd.outcome.players.length); if (!best || rank < best.rank) best = { rank, game: rd.game }; }
+    return best ? best.game : null;
+  }
   let storyJob = 0;
   async function drawStory(cv, fmt, thm) {
-    const job = ++storyJob;
+    const job = ++storyJob; const TAU = Math.PI * 2;
     try { await Promise.all([document.fonts.load('600 60px Marhey'), document.fonts.load('700 40px "IBM Plex Sans Arabic"'), document.fonts.load('400 40px "IBM Plex Sans Arabic"')]); } catch (e) {}
-    const [ph, gp] = await Promise.all([loadImg(photos[pid]), loadImg(groupPhoto)]);
+    const bg = bestGameId(pid);
+    const played = [...new Set(S.rounds.map(r => r.game))];
+    const [ph, gp, bgi, ...icons] = await Promise.all([loadImg(photos[pid]), loadImg(groupPhoto), bg ? iconImg(bg) : null, ...played.slice(0, 6).map(iconImg)]);
     if (job !== storyJob) return;
     const x = cv.getContext('2d'); const W = 1080, H = 1920;
     const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
     const dark = thm === 'dark';
-    const C = { bg: dark ? '#141A2B' : '#F1E6D0', card: dark ? '#222A44' : '#FFF8EA', ink: '#0A0E19', text: dark ? '#F3EAD8' : '#1B2238', sub: dark ? 'rgba(243,234,216,.7)' : 'rgba(27,34,56,.65)', o: css('--c0'), b: css('--c4'), a: css('--c3'), r: css('--c2'), d: css('--c1') };
+    const C = { bg: dark ? '#141A2B' : '#F1E6D0', card: dark ? '#222A44' : '#FFF8EA', ink: '#0A0E19', text: dark ? '#F3EAD8' : '#1B2238', sub: dark ? 'rgba(243,234,216,.68)' : 'rgba(27,34,56,.62)', line: dark ? 'rgba(243,234,216,.18)' : 'rgba(27,34,56,.14)', o: css('--c0'), b: css('--c4'), a: css('--c3'), r: css('--c2'), d: css('--c1'), p: css('--c5') };
     const myCol = css('--c' + me().color) || C.o;
     const r = myRank() || { place: 0, pts: 0, title: '' };
-    const n = S.final ? S.final.ranking.length : 0;
-    const title = r.title || '';
-    const name = nameOf(pid);
-    const placeTxt = isTeam() ? `${teamName(me().team)} · المركز ${r.place + 1} من ${n}` : `المركز ${r.place + 1} من ${n} · ${r.pts} نقطة`;
-    const best = bestGame(pid); const bestTxt = best ? 'أحلى لعبة: ' + best : '';
+    const n = S.final ? S.final.ranking.length : 1;
+    const nP = S.final ? S.final.ranking.length : 1;
+    const name = nameOf(pid), title = r.title || '';
+    const teamTxt = isTeam() ? teamName(me().team) : '';
+    const wins = myWins();
+    const bestName = bg ? META[bg].name : '—';
     const sess = `${S.settings.sessionType} · ${S.settings.sessionName}`;
-    const genTxt = S.settings.family && me().gen ? (me().gen === 'old' ? '📼 جيل الكاسيت' : '📱 جيل الموبايل') : '';
-    const d = new Date(); const stamp = `\u2066'${String(d.getFullYear()).slice(2)} ${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getDate()).padStart(2, '0')}\u2069`;
+    const gen = S.settings.family && me().gen ? (me().gen === 'old' ? 'جيل الكاسيت' : 'جيل الموبايل') : '';
+    const d = new Date(); const stamp = `⁦'${String(d.getFullYear()).slice(2)} ${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getDate()).padStart(2, '0')}⁩`;
     x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); x.direction = 'rtl'; x.textBaseline = 'middle';
-    const T = (s, px, py, size, col, w = 700, font = '"IBM Plex Sans Arabic"', al = 'center', maxW = 900) => { x.font = `${w} ${size}px ${font}`; x.fillStyle = col; x.textAlign = al; let sz = size; while (x.measureText(s).width > maxW && sz > 20) { sz -= 2; x.font = `${w} ${sz}px ${font}`; } x.fillText(s, px, py); };
-    const box = (bx, by, bw, bh, rad, fill, lw = 6, sh = 14) => { x.fillStyle = C.ink; rrp(x, bx + sh, by + sh, bw, bh, rad); x.fill(); x.fillStyle = fill; rrp(x, bx, by, bw, bh, rad); x.fill(); x.lineWidth = lw; x.strokeStyle = C.ink; x.stroke(); };
-    const photoIn = (bx, by, bw, bh, rad) => { x.save(); rrp(x, bx, by, bw, bh, rad); x.clip(); if (ph) { const s = Math.max(bw / ph.width, bh / ph.height); x.drawImage(ph, bx + (bw - ph.width * s) / 2, by + (bh - ph.height * s) / 2, ph.width * s, ph.height * s); } else { x.fillStyle = myCol; x.fillRect(bx, by, bw, bh); T(initials(name), bx + bw / 2, by + bh / 2 + 10, Math.min(bw, bh) * 0.5, '#fff', 700, 'Marhey'); } x.restore(); x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, bx, by, bw, bh, rad); x.stroke(); };
-    const footer = () => { T('\u2066@eyad.hloubi\u2069 · صار بدها قعدة.', W / 2, H - 80, 34, C.sub, 600); };
-    // الخلفية
-    x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
-    x.globalAlpha = dark ? 0.06 : 0.08; for (let i = 0; i < 26; i++) { x.fillStyle = [C.o, C.a, C.d, C.r][i % 4]; x.beginPath(); x.arc((i * 211) % W, (i * 389) % H, 18 + (i % 4) * 10, 0, 6.3); x.fill(); } x.globalAlpha = 1;
+    const T = (s, px, py, size, col, w = 700, font = '"IBM Plex Sans Arabic"', al = 'center', maxW = 900) => { x.font = `${w} ${size}px ${font}`; x.fillStyle = col; x.textAlign = al; let sz = size; while (x.measureText(s).width > maxW && sz > 18) { sz -= 2; x.font = `${w} ${sz}px ${font}`; } x.fillText(s, px, py); };
+    const box = (bx, by, bw, bh, rad, fill, lw = 6, sh = 14) => { if (sh) { x.fillStyle = C.ink; rrp(x, bx + sh, by + sh, bw, bh, rad); x.fill(); } x.fillStyle = fill; rrp(x, bx, by, bw, bh, rad); x.fill(); if (lw) { x.lineWidth = lw; x.strokeStyle = C.ink; x.stroke(); } };
+    const photoIn = (bx, by, bw, bh, rad, path) => { x.save(); if (path) path(); else rrp(x, bx, by, bw, bh, rad); x.clip(); if (ph) { const s = Math.max(bw / ph.width, bh / ph.height); x.drawImage(ph, bx + (bw - ph.width * s) / 2, by + (bh - ph.height * s) / 2, ph.width * s, ph.height * s); } else { x.fillStyle = myCol; x.fillRect(bx, by, bw, bh); x.globalAlpha = 0.18; for (let i = -bh; i < bw; i += 60) { x.fillStyle = '#fff'; x.beginPath(); x.moveTo(bx + i, by + bh); x.lineTo(bx + i + 30, by + bh); x.lineTo(bx + i + 30 + bh, by); x.lineTo(bx + i + bh, by); x.fill(); } x.globalAlpha = 1; T(initials(name), bx + bw / 2, by + bh / 2 + 14, Math.min(bw, bh) * 0.46, '#fff', 600, 'Marhey'); } x.restore(); };
+    const sticker = (img, cx, cy, size, rot, ring) => { if (!img) return; x.save(); x.translate(cx, cy); x.rotate(rot); x.fillStyle = C.ink; x.beginPath(); x.arc(8, 10, size / 2 + 14, 0, TAU); x.fill(); x.fillStyle = ring || '#FFFDF6'; x.beginPath(); x.arc(0, 0, size / 2 + 14, 0, TAU); x.fill(); x.lineWidth = 5; x.strokeStyle = C.ink; x.stroke(); x.drawImage(img, -size / 2, -size / 2, size, size); x.restore(); };
+    const handle = (y, col) => T('⁦@eyad.hloubi⁩ · صار بدها قعدة.', W / 2, y, 34, col || C.sub, 600);
+    const placeTxt = r.place < 3 ? ['الأول', 'التاني', 'التالت'][r.place] : (r.place + 1);
 
-    if (fmt === 'album') {
-      T('قعدة زمان', W / 2, 150, 96, C.text, 600, 'Marhey');
-      T(sess, W / 2, 245, 38, C.sub, 600);
-      x.save(); x.translate(W / 2, 980); x.rotate(-0.03);
-      const pw = 820, phh = 820; box(-pw / 2 - 40, -560, pw + 80, 1080, 10, '#FFFDF6');
-      photoIn(-pw / 2, -520, pw, phh, 4);
-      T(stamp, pw / 2 - 30, 260, 40, '#F07A2A', 700, 'ui-monospace, monospace', 'right');
-      T(name || 'لاعب بلا اسم', 0, 385, 84, '#1B2238', 600, 'Marhey');
-      T(title, 0, 470, 50, C.o, 700);
+    if (fmt === 'cover') {
+      // ═══ غلاف مجلة زمان ═══
+      x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
+      x.fillStyle = myCol; x.fillRect(0, 0, W, 300);
+      x.globalAlpha = 0.14; x.fillStyle = '#000'; for (let i = 0; i < W; i += 28) x.fillRect(i, 0, 12, 300); x.globalAlpha = 1;
+      x.fillStyle = C.ink; x.fillRect(0, 296, W, 8);
+      T('قعدة زمان', W / 2, 150, 170, '#1B2238', 600, 'Marhey');
+      T('العدد ' + stamp + ' · ' + sess, W / 2, 262, 32, 'rgba(27,34,56,.8)', 700, undefined, 'center', 960);
+      // الصورة
+      const px = 80, py = 360, pw = 920, phh = 1060;
+      box(px, py, pw, phh, 26, C.card, 8, 18);
+      photoIn(px, py, pw, phh, 26);
+      const gr = x.createLinearGradient(0, py + phh * 0.55, 0, py + phh); gr.addColorStop(0, 'rgba(10,14,25,0)'); gr.addColorStop(1, 'rgba(10,14,25,.88)');
+      x.save(); rrp(x, px, py, pw, phh, 26); x.clip(); x.fillStyle = gr; x.fillRect(px, py, pw, phh); x.restore();
+      x.lineWidth = 8; x.strokeStyle = C.ink; rrp(x, px, py, pw, phh, 26); x.stroke();
+      T(name || 'لاعب بلا اسم', W / 2, py + phh - 150, 124, '#FFFDF6', 600, 'Marhey', 'center', 840);
+      // شارة اللقب
+      x.font = '700 50px "IBM Plex Sans Arabic"'; const tw = Math.min(800, x.measureText(title).width + 70);
+      box(W / 2 - tw / 2, py + phh - 76, tw, 76, 38, C.b, 5, 0);
+      T(title, W / 2, py + phh - 38, 46, '#1B2238', 700, undefined, 'center', 760);
+      // ختم المركز
+      x.save(); x.translate(px + 150, py + 120); x.rotate(-0.16);
+      x.fillStyle = C.ink; x.beginPath(); x.arc(10, 12, 120, 0, TAU); x.fill();
+      x.fillStyle = C.r; x.beginPath(); x.arc(0, 0, 120, 0, TAU); x.fill(); x.lineWidth = 7; x.strokeStyle = C.ink; x.stroke();
+      x.setLineDash([10, 9]); x.lineWidth = 4; x.strokeStyle = '#FFFDF6'; x.beginPath(); x.arc(0, 0, 98, 0, TAU); x.stroke(); x.setLineDash([]);
+      T('المركز', 0, -42, 34, '#FFFDF6', 700); T(String(placeTxt), 0, 18, typeof placeTxt === 'number' ? 92 : 66, '#FFFDF6', 600, 'Marhey'); T('من ' + n, 0, 74, 28, '#FFFDF6', 700);
       x.restore();
-      // شريط لاصق
-      x.save(); x.translate(W / 2, 400); x.rotate(0.05); x.fillStyle = dark ? 'rgba(244,201,93,.7)' : 'rgba(244,201,93,.8)'; x.fillRect(-120, -34, 240, 68); x.restore();
-      box(120, 1560, W - 240, 190, 30, C.card, 5, 10);
-      T(placeTxt, W / 2, 1620, 44, C.text, 700, undefined, 'center', 780);
-      T([bestTxt, genTxt].filter(Boolean).join(' · ') || 'لعبنا بروح زمان', W / 2, 1690, 36, C.sub, 600, undefined, 'center', 780);
-      footer();
-    } else if (fmt === 'ticket') {
-      const tx = 110, ty = 170, tw = W - 220, th = 1560;
-      box(tx, ty, tw, th, 40, C.card);
-      x.fillStyle = myCol; rrp(x, tx, ty, tw, 230, 40); x.fill(); x.fillRect(tx, ty + 150, tw, 80); x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, tx, ty, tw, th, 40); x.stroke();
-      x.beginPath(); x.moveTo(tx, ty + 230); x.lineTo(tx + tw, ty + 230); x.stroke();
-      T('سينما الحارة', W / 2, ty + 80, 46, '#1B2238', 700);
-      T('قعدة زمان', W / 2, ty + 160, 82, '#1B2238', 600, 'Marhey');
-      photoIn(W / 2 - 300, ty + 300, 600, 600, 300);
-      T(name || 'لاعب بلا اسم', W / 2, ty + 1000, 86, C.text, 600, 'Marhey');
-      T(title, W / 2, ty + 1090, 54, C.o, 700);
-      // التثقيب
-      x.setLineDash([22, 18]); x.lineWidth = 5; x.strokeStyle = C.sub; x.beginPath(); x.moveTo(tx + 60, ty + 1170); x.lineTo(tx + tw - 60, ty + 1170); x.stroke(); x.setLineDash([]);
-      x.fillStyle = C.bg; x.beginPath(); x.arc(tx, ty + 1170, 40, 0, 6.3); x.arc(tx + tw, ty + 1170, 40, 0, 6.3); x.fill();
-      T(placeTxt, W / 2, ty + 1260, 44, C.text, 700, undefined, 'center', 760);
-      T(sess, W / 2, ty + 1330, 38, C.sub, 600, undefined, 'center', 760);
-      T([bestTxt, genTxt].filter(Boolean).join(' · ') || stamp, W / 2, ty + 1400, 36, C.sub, 600, undefined, 'center', 760);
-      T('المقعد: ' + (r.place + 1), tx + tw - 70, ty + 1480, 34, C.text, 700, undefined, 'right');
-      T(stamp, tx + 70, ty + 1480, 34, C.text, 700, 'ui-monospace, monospace', 'left');
-      footer();
+      if (bgi) sticker(bgi, px + pw - 110, py + 120, 120, 0.14);
+      // المؤشرات
+      const sy = 1480, sw = 290, sg = 25; const items = [[String(r.pts), 'نقطة'], [String(wins), wins === 1 ? 'لعبة ربحها' : 'ألعاب ربحها'], [bestName, 'أحلى لعبة']];
+      items.forEach(([v, l], i) => { const bx = W - 80 - sw - i * (sw + sg); box(bx, sy, sw, 190, 24, C.card, 5, 10); T(v, bx + sw / 2, sy + 78, v.length > 6 ? 40 : 76, C.text, 700, v.length > 6 ? undefined : 'Marhey', 'center', sw - 30); T(l, bx + sw / 2, sy + 150, 30, C.sub, 700, undefined, 'center', sw - 30); });
+      T([teamTxt, gen].filter(Boolean).join(' · ') || ('من أصل ' + nP + ' لاعبين'), W / 2, 1740, 38, C.text, 700, undefined, 'center', 920);
+      handle(1840);
+    } else if (fmt === 'polaroid') {
+      // ═══ بولاريد على ورق جدران السبعينات ═══
+      x.fillStyle = dark ? '#1B2238' : '#EADBC0'; x.fillRect(0, 0, W, H);
+      const pal2 = [C.o, C.b, C.a, C.r]; const tile = 180;
+      for (let ty = -tile; ty < H + tile; ty += tile) for (let tx = 0; tx < W + tile; tx += tile) {
+        x.save(); x.translate(tx, ty); x.globalAlpha = dark ? 0.16 : 0.22;
+        for (let k = 4; k >= 1; k--) { x.fillStyle = pal2[(k + Math.round(tx / tile) + Math.round(ty / tile)) % 4]; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, k * 40, 0, Math.PI / 2); x.closePath(); x.fill(); }
+        x.restore();
+      }
+      x.globalAlpha = 1;
+      T('قعدة زمان', W / 2, 140, 110, C.text, 600, 'Marhey');
+      T(sess, W / 2, 222, 34, C.sub, 700, undefined, 'center', 920);
+      x.save(); x.translate(W / 2, 960); x.rotate(-0.035);
+      const fw = 880, fh = 1120;
+      x.fillStyle = 'rgba(0,0,0,.35)'; rrp(x, -fw / 2 + 18, -fh / 2 + 22, fw, fh, 8); x.fill();
+      x.fillStyle = '#FFFDF6'; rrp(x, -fw / 2, -fh / 2, fw, fh, 8); x.fill(); x.lineWidth = 4; x.strokeStyle = C.ink; x.stroke();
+      photoIn(-fw / 2 + 50, -fh / 2 + 50, fw - 100, 790, 4);
+      x.lineWidth = 3; x.strokeStyle = C.ink; x.strokeRect(-fw / 2 + 50, -fh / 2 + 50, fw - 100, 790);
+      T(stamp, fw / 2 - 74, -fh / 2 + 800, 40, '#F07A2A', 700, 'ui-monospace, monospace', 'right');
+      T(name || 'لاعب بلا اسم', 0, fh / 2 - 190, 110, '#1B2238', 600, 'Marhey', 'center', 760);
+      T(title, 0, fh / 2 - 90, 54, C.o, 700, undefined, 'center', 760);
+      x.restore();
+      // لاصق
+      for (const [tx, ty, rt] of [[W / 2 - 230, 400, -0.18], [W / 2 + 230, 395, 0.2]]) { x.save(); x.translate(tx, ty); x.rotate(rt); x.fillStyle = 'rgba(242,193,78,.78)'; x.fillRect(-90, -30, 180, 60); x.restore(); }
+      // وسام المركز
+      x.save(); x.translate(W - 190, 470); x.rotate(0.12);
+      x.fillStyle = C.r; x.beginPath(); x.moveTo(-50, 60); x.lineTo(-80, 210); x.lineTo(-30, 180); x.lineTo(-10, 230); x.lineTo(10, 70); x.fill(); x.fillStyle = C.d; x.beginPath(); x.moveTo(50, 60); x.lineTo(80, 210); x.lineTo(30, 180); x.lineTo(10, 230); x.lineTo(-10, 70); x.fill();
+      for (let i = 0; i < 24; i++) { const a0 = i / 24 * TAU; x.fillStyle = i % 2 ? C.b : C.o; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, 130, a0, a0 + TAU / 24); x.fill(); }
+      x.lineWidth = 6; x.strokeStyle = C.ink; x.beginPath(); x.arc(0, 0, 130, 0, TAU); x.stroke();
+      x.fillStyle = '#FFFDF6'; x.beginPath(); x.arc(0, 0, 92, 0, TAU); x.fill(); x.stroke();
+      T('المركز', 0, -34, 30, '#1B2238', 700); T(String(placeTxt), 0, 20, typeof placeTxt === 'number' ? 80 : 56, '#1B2238', 600, 'Marhey');
+      x.restore();
+      // ستيكرات الألعاب
+      const spots = [[150, 1560, -0.2], [330, 1640, 0.15], [W - 160, 1590, 0.22], [130, 640, 0.1], [W - 130, 1220, -0.12]];
+      icons.slice(0, 5).forEach((im, i) => sticker(im, spots[i][0], spots[i][1], 110, spots[i][2]));
+      box(W / 2 - 260, 1600, 520, 150, 30, C.card, 5, 10);
+      T(r.pts + ' نقطة · ربح ' + wins, W / 2, 1650, 42, C.text, 700, undefined, 'center', 480);
+      T('أحلى لعبة: ' + bestName, W / 2, 1708, 32, C.sub, 700, undefined, 'center', 480);
+      if (teamTxt || gen) T([teamTxt, gen].filter(Boolean).join(' · '), W / 2, 1790, 34, C.text, 700, undefined, 'center', 900);
+      handle(1860);
     } else {
-      // غلاف كاسيت (J-card)
-      const cx0 = 100, cy0 = 140, cw = W - 200, ch = 1600;
-      box(cx0, cy0, cw, ch, 24, C.card);
-      const stripes = [C.o, C.b, C.a, C.d];
-      stripes.forEach((s, i) => { x.fillStyle = s; x.fillRect(cx0 + 3, cy0 + 70 + i * 34, cw - 6, 34); });
-      x.lineWidth = 6; x.strokeStyle = C.ink; rrp(x, cx0, cy0, cw, ch, 24); x.stroke();
-      T('قعدة زمان', W / 2, cy0 + 300, 100, C.text, 600, 'Marhey');
-      T('SIDE A', cx0 + 70, cy0 + 300, 40, C.sub, 700, 'ui-monospace, monospace', 'left');
-      photoIn(W / 2 - 330, cy0 + 400, 660, 660, 28);
-      T(name || 'لاعب بلا اسم', W / 2, cy0 + 1160, 84, C.text, 600, 'Marhey');
-      T(title, W / 2, cy0 + 1250, 52, C.o, 700);
-      x.lineWidth = 4; x.strokeStyle = C.sub; x.beginPath(); x.moveTo(cx0 + 80, cy0 + 1320); x.lineTo(cx0 + cw - 80, cy0 + 1320); x.stroke();
-      T(placeTxt, W / 2, cy0 + 1390, 44, C.text, 700, undefined, 'center', 780);
-      T(sess, W / 2, cy0 + 1455, 38, C.sub, 600, undefined, 'center', 780);
-      T([bestTxt, genTxt].filter(Boolean).join(' · ') || stamp, W / 2, cy0 + 1520, 36, C.sub, 600, undefined, 'center', 780);
-      footer();
+      // ═══ كرت لاعب ═══
+      x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
+      x.save(); x.globalAlpha = dark ? 0.2 : 0.16; x.fillStyle = myCol; for (let i = -H; i < W + H; i += 90) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 40, 0); x.lineTo(i + 40 - H, H); x.lineTo(i - H, H); x.fill(); } x.restore();
+      const cx0 = 90, cy0 = 110, cw = W - 180, chh = 1650;
+      box(cx0, cy0, cw, chh, 54, myCol, 8, 20);
+      const ix = cx0 + 34, iy = cy0 + 34, iw = cw - 68, ih = chh - 68;
+      x.fillStyle = C.card; rrp(x, ix, iy, iw, ih, 34); x.fill(); x.lineWidth = 5; x.strokeStyle = C.ink; x.stroke();
+      T('قعدة زمان', ix + iw - 40, iy + 70, 60, C.text, 600, 'Marhey', 'right');
+      T(sess, ix + iw - 40, iy + 130, 28, C.sub, 700, undefined, 'right', 520);
+      // شارة المركز
+      x.save(); x.translate(ix + 120, iy + 105);
+      x.fillStyle = C.ink; x.beginPath(); for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAU - Math.PI / 2; x.lineTo(8 + Math.cos(a0) * 92, 10 + Math.sin(a0) * 92); } x.fill();
+      x.fillStyle = C.b; x.beginPath(); for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAU - Math.PI / 2; x.lineTo(Math.cos(a0) * 92, Math.sin(a0) * 92); } x.closePath(); x.fill(); x.lineWidth = 6; x.stroke();
+      T(String(r.place + 1), 0, -4, 84, '#1B2238', 600, 'Marhey'); T('من ' + n, 0, 52, 26, '#1B2238', 700);
+      x.restore();
+      // الصورة بقوس
+      const ax = ix + 50, ay = iy + 220, aw = iw - 100, ah = 820;
+      const arch = () => { x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + aw / 2); x.arc(ax + aw / 2, ay + aw / 2, aw / 2, Math.PI, 0); x.lineTo(ax + aw, ay + ah); x.closePath(); };
+      photoIn(ax, ay, aw, ah, 0, arch); arch(); x.lineWidth = 6; x.strokeStyle = C.ink; x.stroke();
+      if (bgi) sticker(bgi, ax + aw - 60, ay + ah - 40, 110, 0.12, C.b);
+      // شريط الاسم
+      const by = ay + ah + 20;
+      x.fillStyle = C.ink; x.beginPath(); x.moveTo(ix + 10 + 10, by + 12); x.lineTo(ix + iw - 10 + 10, by + 12); x.lineTo(ix + iw - 50 + 10, by + 75 + 12); x.lineTo(ix + iw - 10 + 10, by + 150 + 12); x.lineTo(ix + 10 + 10, by + 150 + 12); x.lineTo(ix + 50 + 10, by + 75 + 12); x.closePath(); x.fill();
+      x.fillStyle = C.r; x.beginPath(); x.moveTo(ix + 10, by); x.lineTo(ix + iw - 10, by); x.lineTo(ix + iw - 50, by + 75); x.lineTo(ix + iw - 10, by + 150); x.lineTo(ix + 10, by + 150); x.lineTo(ix + 50, by + 75); x.closePath(); x.fill(); x.lineWidth = 5; x.strokeStyle = C.ink; x.stroke();
+      T(name || 'لاعب بلا اسم', W / 2, by + 78, 96, '#FFFDF6', 600, 'Marhey', 'center', iw - 160);
+      T(title, W / 2, by + 220, 52, C.o, 700, undefined, 'center', iw - 80);
+      // جدول المؤشرات
+      const rows2 = [['المركز', (r.place + 1) + ' من ' + n], ['النقاط', String(r.pts)], ['ألعاب ربحها', String(wins)], ['أحلى لعبة', bestName]];
+      if (teamTxt) rows2.splice(1, 0, ['الفريق', teamTxt]);
+      const ty0 = by + 300, rh = Math.min(70, (iy + ih - 40 - ty0) / rows2.length);
+      rows2.forEach(([l, v], i) => { const yy = ty0 + i * rh; T(l, ix + iw - 60, yy, 36, C.sub, 700, undefined, 'right'); T(v, ix + 60, yy, 40, C.text, 700, undefined, 'left', 420); x.setLineDash([3, 10]); x.lineWidth = 3; x.strokeStyle = C.line; x.beginPath(); x.moveTo(ix + 60, yy + rh / 2); x.lineTo(ix + iw - 60, yy + rh / 2); x.stroke(); x.setLineDash([]); });
+      handle(1835, C.text);
     }
     // الصورة الجماعية الصغيرة
-    if (gp) { const gw = 250, gh = 188, gx = 70, gy = fmt === 'album' ? 1340 : 60; x.save(); x.translate(gx + gw / 2, gy + gh / 2); x.rotate(0.06); x.fillStyle = C.ink; x.fillRect(-gw / 2 - 12 + 8, -gh / 2 - 12 + 8, gw + 24, gh + 24); x.fillStyle = '#FFFDF6'; x.fillRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.drawImage(gp, -gw / 2, -gh / 2, gw, gh); x.lineWidth = 4; x.strokeStyle = C.ink; x.strokeRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.restore(); }
+    if (gp) { const gw = 240, gh = 180, gx = fmt === 'card' ? 70 : 60, gy = fmt === 'cover' ? 1240 : fmt === 'polaroid' ? 1330 : 1500; x.save(); x.translate(gx + gw / 2, gy + gh / 2); x.rotate(-0.07); x.fillStyle = C.ink; x.fillRect(-gw / 2 - 12 + 8, -gh / 2 - 12 + 8, gw + 24, gh + 24); x.fillStyle = '#FFFDF6'; x.fillRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); const s2 = Math.max(gw / gp.width, gh / gp.height); x.save(); x.beginPath(); x.rect(-gw / 2, -gh / 2, gw, gh); x.clip(); x.drawImage(gp, -gp.width * s2 / 2, -gp.height * s2 / 2, gp.width * s2, gp.height * s2); x.restore(); x.lineWidth = 4; x.strokeStyle = C.ink; x.strokeRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.restore(); }
   }
   function rrp(x, X0, Y0, w, h, r) { x.beginPath(); x.moveTo(X0 + r, Y0); x.arcTo(X0 + w, Y0, X0 + w, Y0 + h, r); x.arcTo(X0 + w, Y0 + h, X0, Y0 + h, r); x.arcTo(X0, Y0 + h, X0, Y0, r); x.arcTo(X0, Y0, X0 + w, Y0, r); x.closePath(); }
 
@@ -810,11 +927,17 @@
   function endMenu() {
     if (!isHost()) return;
     const canFinish = ['intro', 'play', 'result'].includes(S.phase);
-    sheet(`<h3>شو بدك تعمل؟</h3>
+    const ids = S.order.filter(id => S.players[id] && !S.players[id].kicked);
+    sheet(`<h3>أدوات ${myG('الريس', 'الريسة')}</h3>
+      ${S.phase === 'play' ? `<button class="btn big red" id="emClose">سكّر اللعبة هلأ</button><p class="hint">كل واحد بتنحسبله النتيجة اللي وصلها</p>` : ''}
       ${canFinish ? `<button class="btn big" id="emFin">خلّصنا، ورجينا النتيجة</button><p class="hint">${S.rounds.length ? 'بتنحسب الألعاب اللي خلصت (' + S.rounds.length + ')' : 'لسّا ما خلصت ولا لعبة'}</p>` : ''}
-      <button class="btn ghost big" id="emNew">قعدة جديدة بنفس الناس</button><p class="hint">بيتصفّر كل شي وبترجعوا للانتظار</p>`, (s, close) => {
+      <button class="btn ghost big" id="emNew">قعدة جديدة بنفس الناس</button><p class="hint">بيتصفّر كل شي وبترجعوا للانتظار</p>
+      <h4>اللاعبين (${ids.length})</h4><p class="hint">اكبس على حدا لتعدّل اسمه أو تطلّعه، بأي وقت</p>
+      <div class="pgrid">${ids.map(id => `<button class="pchip ${S.players[id].connected ? '' : 'off'}" data-id="${esc(id)}" style="--pc:var(--c${S.players[id].color})">${avatar(id, 30)}<span>${esc(nameOf(id))}${S.players[id].connected ? '' : ' <em>(مفصول)</em>'}</span></button>`).join('')}</div>`, (s, close) => {
+      const cl = $('#emClose', s); if (cl) cl.onclick = () => { close(); host('stopRound'); };
       const f = $('#emFin', s); if (f) f.onclick = () => { close(); host('finish'); };
       $('#emNew', s).onclick = () => { close(); confirmBox('أكيد؟ رح تنمسح نتيجة هالقعدة.', 'قعدة جديدة', () => host('again')); };
+      $$('.pchip', s).forEach(b => b.onclick = () => { close(); playerMenu(b.dataset.id); });
     });
   }
 
@@ -823,7 +946,7 @@
     sheet(`<h3>كيف منلعب؟</h3>
       <ol class="hsteps">
         <li><i>${I.tv}</i><div><b>الريس بيفتح القعدة</b><small>بتطلع QR وكود من 5 أحرف، والكل بيفوت من موبايله.</small></div></li>
-        <li><i>${I.crown}</i><div><b>بيختار طريقة اللعب</b><small>فردي، أو فرق كاملة، أو فرق بعضو كل جولة. وكم لعبة بدكن.</small></div></li>
+        <li><i>${I.crown}</i><div><b>بيختار طريقة اللعب</b><small>فردي أو فرق، وكم لعبة بدكن.</small></div></li>
         <li><i>${I.rotary}</i><div><b>دولاب القنوات بيدور لحاله</b><small>وبيختار اللعبة، والكل بيبلّش سوا بنفس اللحظة بعد العدّ.</small></div></li>
         <li><i>${I.cassette}</i><div><b>بعد كل لعبة</b><small>ترتيب ونقاط، وبطاقة «كانت زمان».</small></div></li>
         <li><i>${I.hat}</i><div><b>بالآخر</b><small>زعيم الحارة، ونتيجة كاملة، وصورة للستوري.</small></div></li>
@@ -831,13 +954,13 @@
       <h4>الألعاب</h4>
       <ul class="hgames">${GAME_ORDER.map(g => `<li><i>${I[g]}</i><div><b>${META[g].name}<em>${META[g].mode} بيربح</em></b><small>${META[g].how}</small></div></li>`).join('')}</ul>
       <h4>النقاط</h4>
-      <ul class="hl"><li>بالفردي: الأول 5 نقاط، التاني 3، التالت 2، والباقي نقطة.</li><li>اللي بيطلعوا نفس النتيجة بالضبط، بياخدوا نفس المركز ونفس النقاط.</li><li>بالفرق: الفريق الأول 3، التاني 2، التالت 1.</li></ul>
+      <ul class="hl"><li>بالفردي: الأول 5 نقاط، التاني 3، التالت 2، والباقي نقطة.</li><li>اللي بيطلعوا نفس النتيجة بالضبط، بياخدوا نفس المركز ونفس النقاط.</li><li>بالفرق: نتيجة الفريق هي المتوسط الحسابي لنتايج أعضاءه، والفريق الأول بياخد 3، التاني 2، التالت 1.</li></ul>
       <h4>وضع العيلة</h4>
       <div class="fam-help">لما تكون القعدة فيها كبار وصغار، الريس بيشغّل «وضع العيلة». كل لاعب بيختار جيله: <b>📼 جيل الكاسيت</b> (الكبار) أو <b>📱 جيل الموبايل</b> (الصغار). اللعب نفسه ما بيتغيّر، بس بالنتيجة النهائية بتطلع مقارنة: أي جيل كان أشطر بألعاب زمان؟</div>
       <h4>أدوات الريس</h4>
-      <ul class="hl"><li>لما الكل يكبس «جاهز» اللعبة بتبلّش لحالها، أو الريس بيكبس «بلّش هلأ».</li><li>زر «إنهاء» فوق: «خلّصنا» بيطلّع النتيجة فوراً، و«قعدة جديدة» بيصفّر كل شي.</li><li>يمرّر لعبة ما حبّوها، ويعيد لعبة ما فهموها (النتيجة بتنلغى).</li><li>يوقّف اللعبة، أو يخلّص القعدة بأي وقت.</li><li>يعدّل الأسماء، يطلّع حدا، أو يسلّم الريسة.</li><li>يختار حفلة كشف أو كشف دفعة وحدة.</li></ul>
+      <ul class="hl"><li>لما الكل يكبس «جاهز» اللعبة بتبلّش لحالها، أو الريس بيكبس «بلّش هلأ».</li><li>زر «إنهاء» فوق: «سكّر اللعبة هلأ»، «خلّصنا» بيطلّع النتيجة، «قعدة جديدة» بيصفّر كل شي، وقائمة اللاعبين لتطلّع أو تعدّل أي حدا بأي وقت.</li><li>يمرّر لعبة ما حبّوها، ويعيد لعبة ما فهموها (النتيجة بتنلغى).</li><li>يوقّف اللعبة، أو يخلّص القعدة بأي وقت.</li><li>يعدّل الأسماء، يطلّع حدا، أو يسلّم الريسة.</li><li>يختار حفلة كشف أو كشف دفعة وحدة.</li></ul>
       <h4>الفرق والرهان</h4>
-      <ul class="hl"><li>لكل فريق قائد، وبيقدر يطلب رهان: إذا وافقت الفرق التانية، الجولة بتنحسب دبل.</li><li>بالفرق الكاملة، معدّل الفريق هو اللي بيحسب.</li></ul>
+      <ul class="hl"><li>لكل فريق قائد، وبيقدر يطلب رهان: إذا وافقت الفرق التانية، الجولة بتنحسب دبل.</li><li>قائد الفريق بيقدر يغيّر اسم فريقه من شاشة الانتظار.</li></ul>
       <h4>شغلات مهمة</h4>
       <ul class="hl"><li>«ظبّط الأنتين» بيشتغل بميلان الموبايل، وعالآيفون اكبس «جاهز» واسمح بالحساس. وإذا ما في حساس، بتسحب بإصبعك.</li><li>إذا الريس طلع، اللعبة ما بتوقف، وبعد 45 ثانية حدا تاني بيقدر يصير الريس.</li><li>ما حدا بيشوف أرقام غيره خلال اللعب، بس الترتيب بالآخر.</li></ul>
       <p class="ref">مرجع اللعبة: ألعاب الحارة الشعبية وأجهزة زمان (الكاسيت، الأنتين، التلفون أبو دولاب، موبايلات الأزرار).<br>إعداد م. إياد حلوبي</p>`);
