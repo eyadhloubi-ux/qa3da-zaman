@@ -484,3 +484,15 @@ body.has-end .tt-word{display:none}
 .rv-pts{margin-top:8px;font-weight:700}.rv-pts b{font-family:ui-monospace,monospace;font-size:30px;color:var(--c4)}
 .rv-team{font-family:var(--tf);font-weight:600;font-size:30px;background:var(--pc);color:#1B2238;border:3px solid #05070D;border-radius:16px;padding:14px 18px}
 .rv-done{margin-top:16px}
+
+.ch-vol{position:absolute;top:44px;left:50%;transform:translateX(-50%);z-index:3;background:var(--c4);color:#1B2238;border:2.5px solid #05070D;border-radius:20px;padding:4px 14px;font-weight:700;font-size:14px;white-space:nowrap;animation:volOut 6s forwards}
+@keyframes volOut{0%,80%{opacity:1}100%{opacity:0;visibility:hidden}}
+.rv-chan{position:absolute;top:10px;right:12px;font-family:ui-monospace,monospace;font-weight:700;color:#F3EAD8;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 8px;font-size:13px}
+.rv-lbl{font-family:var(--tf);font-weight:600;font-size:28px;color:#F3EAD8;text-shadow:0 2px 0 #000;background:rgba(0,0,0,.35);border-radius:14px;padding:4px 14px}
+.fw{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+.setup h2{text-align:center;font-family:var(--tf);font-weight:600;margin:4px 0}
+.gp.big{width:100%;height:auto;aspect-ratio:4/3;border-radius:16px;margin:6px 0 10px;border-width:3px}
+.gp.big svg{width:52px;height:52px}
+.setup .row2{margin-top:0}
+.hint.sm{font-size:12px;margin-top:6px}

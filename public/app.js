@@ -7,7 +7,7 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
-  const { META, IMPL, mulberry32, beep, buzz } = window.ZG;
+  const { META, IMPL, mulberry32, beep, buzz, noise } = window.ZG;
 
   // ───────── الأيقونات ─────────
   const I = {
@@ -42,6 +42,7 @@
 
   // ───────── الحالة ─────────
   let pid = LS.get('zaman_pid'); if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); LS.set('zaman_pid', pid); }
+  let wantSetup = false;
   let code = null, S = null, ws = null, offset = 0, photos = {}, groupPhoto = null, connected = false, wantProfile = false, editingProfile = false;
   const params = new URLSearchParams(location.search);
   if (params.get('r')) code = params.get('r').toUpperCase(); else code = LS.get('zaman_room');
@@ -112,6 +113,22 @@
     return close;
   }
   function confirmBox(text, yes, cb) { sheet(`<h3>${text}</h3><div class="row2"><button class="btn ghost" data-n>لا</button><button class="btn red" data-y>${yes}</button></div>`, (el, close) => { $('[data-n]', el).onclick = close; $('[data-y]', el).onclick = () => { close(); cb(); }; }); }
+  function fireworks() {
+    const c = document.createElement('canvas'); c.className = 'fw'; document.body.appendChild(c);
+    const x = c.getContext('2d'); const W = c.width = innerWidth, H = c.height = innerHeight;
+    const cols = ['--c0', '--c2', '--c3', '--c4', '--c5', '--c1'].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+    const P = [];
+    const burst = (bx, by, big) => { noise(big ? 1.1 : 0.7, big ? 0.6 : 0.35, 700); const n = big ? 120 : 70, col = cols[Math.floor(Math.random() * cols.length)];
+      for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = (big ? 7 : 5) * (0.4 + Math.random()); P.push({ x: bx, y: by, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, c: Math.random() < 0.3 ? '#FFF6D8' : col }); } };
+    const plan = [[0, W * 0.5, H * 0.3, 1], [350, W * 0.25, H * 0.22, 0], [600, W * 0.78, H * 0.26, 0], [950, W * 0.4, H * 0.18, 1], [1250, W * 0.65, H * 0.35, 0], [1600, W * 0.5, H * 0.25, 1]];
+    plan.forEach(([t, bx, by, big]) => setTimeout(() => burst(bx, by, big), t));
+    let t0 = performance.now();
+    (function f() { const el = performance.now() - t0; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H);
+      x.globalCompositeOperation = 'lighter';
+      for (const p of P) { p.vy += 0.07; p.vx *= 0.985; p.vy *= 0.985; p.x += p.vx; p.y += p.vy; p.life -= 0.011; if (p.life <= 0) continue; x.globalAlpha = Math.max(0, p.life); x.fillStyle = p.c; x.beginPath(); x.arc(p.x, p.y, 2.6, 0, 6.283); x.fill(); }
+      x.globalAlpha = 1; if (el < 4200) requestAnimationFrame(f); else c.remove(); })();
+    setTimeout(() => confetti(120), 400);
+  }
   function confetti(n = 120) {
     const c = document.createElement('canvas'); c.className = 'confetti'; document.body.appendChild(c);
     const x = c.getContext('2d'); const W = c.width = innerWidth, H = c.height = innerHeight;
@@ -137,6 +154,8 @@
     if (!S) { if (!screen || screen.key !== 'loading') showScreen({ key: 'loading', el: el('<div class="center-msg"><div class="tv-mini">' + I.tv + '</div><p>عم نوصل للقعدة…</p></div>') }); return; }
     const needGen = me() && S.settings.family && !me().gen && S.phase === 'lobby';
     if (!me() || wantProfile || needGen) { if (!screen || screen.key !== 'profile') showScreen(profileScreen()); return; }
+    const needSetup = isHost() && S.phase === 'lobby' && (!S.settings.sessionName.trim() || wantSetup);
+    if (needSetup) { if (!screen || screen.key !== 'setup') showScreen(setupScreen()); else if (screen.update) screen.update(); return; }
     let key = S.phase;
     const c = S.cur;
     if (S.phase === 'intro' && c && c.wheelAt && wheelAnimKey !== c.n + ':' + c.seed) {
@@ -254,6 +273,32 @@
         setTimeout(render, 50);
       };
     };
+    return sc;
+  }
+
+  // ═════════════ بطاقة القعدة (للريس من الأول) ═════════════
+  function setupScreen() {
+    const s = S.settings; const types = ['شلة', 'رفقة', 'عيلة', 'شغل'];
+    let type = types.includes(s.sessionType) ? s.sessionType : (s.sessionType || 'شلة');
+    const e = el(`<section class="card setup"><h2>بطاقة القعدة</h2><p class="hint">قبل ما يفوت الناس: سمّوا القعدة وصوّروا صورتكن، بتطلع بالنتيجة وبصور الستوري</p>
+      <div class="gp big" data-group data-empty="${esc(I.cam)}">${groupPhoto ? `<img src="${groupPhoto}">` : I.cam}</div>
+      <div class="row2"><button class="btn ghost sm" id="gpSel">${I.cam} سيلفي بمؤقت</button><button class="btn ghost sm" id="gpGal">${I.img} من الصور</button></div><input type="file" accept="image/*" id="gpFile" hidden>
+      <p class="hint sm">الصورة اختيارية، وبتقدر تزيدها أو تغيّرها بعدين</p>
+      <label class="fld"><span>اسم القعدة <em>(إجباري)</em></span><input id="sn" maxlength="30" placeholder="مثلاً: سهرة الخميس" value="${esc(s.sessionName)}"></label>
+      <div class="fld"><span>نوع القعدة</span><div class="chips">${types.map(t => `<button data-t="${t}">${t}</button>`).join('')}<button data-t="__">غير شي</button></div><input id="st" maxlength="20" placeholder="اكتبوه إنتو" hidden></div>
+      <button class="btn big" id="go">يلا، خلّي الناس تفوت</button></section>`);
+    const sc = { key: 'setup', el: e };
+    const paint = () => { const custom = !types.includes(type); $$('.chips button', e).forEach(b => b.classList.toggle('on', b.dataset.t === type || (custom && b.dataset.t === '__'))); $('#st', e).hidden = !custom; if (custom && type !== 'غير شي') $('#st', e).value = type; };
+    sc.mounted = () => {
+      paint(); bindGroupPhoto(e);
+      $$('.chips button', e).forEach(b => b.onclick = () => { type = b.dataset.t === '__' ? 'غير شي' : b.dataset.t; paint(); });
+      $('#go', e).onclick = () => {
+        const n = $('#sn', e).value.trim(); if (!n) { toast('اكتب اسم القعدة'); $('#sn', e).focus(); return; }
+        const t = type === 'غير شي' ? ($('#st', e).value.trim() || 'غير شي') : type;
+        host('settings', { v: { sessionName: n, sessionType: t } }); wantSetup = false; screen = null; setTimeout(render, 120);
+      };
+    };
+    sc.update = () => { const g = $('.gp.big', e); if (g) g.innerHTML = groupPhoto ? `<img src="${groupPhoto}">` : I.cam; };
     return sc;
   }
 
@@ -584,16 +629,14 @@
       sc.stopRaf = () => cancelAnimationFrame(raf); const stopStatic = () => { stOn = false; cancelAnimationFrame(raf); cv.style.opacity = 0; };
       const inn = $('.rv-in', box);
       if (!step) { inn.innerHTML = `<div class="rv-q">؟</div>`; ctl(places, step); return; }
-      // طبل: كل ما قرّبنا من الأول بيطول
-      const drum = top ? 4200 : podium ? 2600 : 1400;
-      inn.innerHTML = `<div class="rv-drum">🥁<b>${top ? 'والزعيم هو…' : 'المركز ' + (place + 1)}</b></div>`;
-      let k = 0; const t0 = performance.now();
-      const roll = () => { const el2 = performance.now() - t0; if (el2 > drum) return; beep(180 + (el2 / drum) * 260, 0.03, 'square', 0.035); k++; later(roll, Math.max(45, 220 - el2 / drum * 180)); };
-      roll();
+      // تشويش التلفزيون، وبعدين بتصفى الصورة. الأول بيطوّل شوي وبيختم بفتيش
+      const wait = top ? 2600 : podium ? 1900 : 1300;
+      inn.innerHTML = `<span class="rv-chan">CH ${place + 1}</span><div class="rv-lbl">${top ? 'المركز الأول…' : 'المركز ' + (place + 1)}</div>`;
+      noise(wait / 1000, 0.035);
       sc.busy = true; ctl(places, step);
       later(() => {
         stopStatic(); sc.busy = false;
-        const g0 = group[0]; const w0 = who(g0);
+        const g0 = group[0];
         inn.innerHTML = `<div class="rv-card">
             <div class="rv-pl">${place < 3 ? ['🥇', '🥈', '🥉'][place] : '#' + (place + 1)}</div>
             <div class="rv-avs">${group.map(r => who(r).av).join('')}</div>
@@ -602,17 +645,16 @@
             <div class="rv-pts"><b data-to="${g0.pts}">0</b> نقطة</div></div>`;
         const pb = $('.rv-pts b', inn); const to = g0.pts, t1 = performance.now();
         const cnt = () => { const p = Math.min(1, (performance.now() - t1) / 900); pb.textContent = Math.round(to * p); if (p < 1) requestAnimationFrame(cnt); }; cnt();
-        beep(top ? 880 : 620, top ? 0.5 : 0.2, 'triangle', 0.06); buzz(top ? [80, 40, 80, 40, 160] : [60]);
-        if (top) { confetti(220); later(() => confetti(160), 700); } else if (podium) confetti(70);
+        if (top) { fireworks(); buzz([120, 60, 120, 60, 200]); } else beep(620, 0.15, 'triangle', 0.05);
         ctl(places, step);
-      }, drum);
+      }, wait);
     }
     function ctl(places, step) {
       const box = $('#rvctl', e); if (!box) return;
       const nextPlace = places[step];
       if (!isHost()) { box.innerHTML = sc.busy ? '' : `<div class="wait">${step >= places.length ? 'ناطرين النتيجة الكاملة…' : 'ناطرين الكشف الجاي…'}</div>`; return; }
       if (sc.busy) { box.innerHTML = ''; return; }
-      const txtB = step >= places.length ? 'النتيجة الكاملة' : nextPlace === 0 ? '🥁 كشف ' + (isTeam() ? 'الزعماء' : 'الزعيم') : (step === 0 ? 'ابدأ: المركز ' + (nextPlace + 1) : 'الجاي: المركز ' + (nextPlace + 1));
+      const txtB = step >= places.length ? 'النتيجة الكاملة' : nextPlace === 0 ? 'كشف المركز الأول' : (step === 0 ? 'ابدأ: المركز ' + (nextPlace + 1) : 'الجاي: المركز ' + (nextPlace + 1));
       box.innerHTML = `<button class="btn big" id="nx">${txtB}</button>`;
       $('#nx', box).onclick = (ev) => { ev.target.disabled = true; host('revealNext'); };
     }
