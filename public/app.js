@@ -691,7 +691,7 @@
       ${fam ? `<div class="card fam"><b>جيل الكاسيت ضد جيل الموبايل</b><div class="fam-bar"><i style="width:${fam.pctOld}%"></i></div><div class="fam-l"><span>📼 الكاسيت <bdi dir="ltr">${fam.pctOld}%</bdi></span><span>الموبايل <bdi dir="ltr">${100 - fam.pctOld}%</bdi> 📱</span></div><small>${fam.pctOld === 50 ? 'تعادل! الجيلين قدّ بعض' : (fam.pctOld > 50 ? 'جيل الكاسيت لسّا ماسك الحارة' : 'جيل الموبايل سحب البساط')}</small></div>` : ''}
       <details class="card rounds"><summary>كل الألعاب بالتفصيل</summary>${S.rounds.map(rd => `<div class="rd"><b>${I[rd.game]} ${META[rd.game].name}${rd.mult > 1 ? ' · دبل' : ''}</b><small>${isTeam() ? rd.outcome.teams.map(t => (t.place + 1) + '. ' + esc(teamName(t.team))).join(' · ') : rd.outcome.players.slice(0, 5).map(p => (p.place + 1) + '. ' + esc(nameOf(p.id)) + ' (' + esc(resultLabel2(rd, p)) + ')').join(' · ')}</small></div>`).join('') || '<small>ما انلعبت ألعاب</small>'}</details>
       <div class="card sessc"><div class="gp" data-group data-empty="">${groupPhoto ? `<img src="${groupPhoto}">` : ''}</div><div><small>${esc(S.settings.sessionType)}</small><b>${esc(S.settings.sessionName)}</b></div><button class="link" id="edS" ${isHost() ? '' : 'hidden'}>تعديل</button></div>
-      <div class="card story"><b>صورتك للستوري</b><div class="seg three" id="fmt"><button data-v="cover">غلاف</button><button data-v="polaroid">بولاريد</button><button data-v="card">كرت</button></div><div class="seg" id="thm"><button data-v="light">فاتح</button><button data-v="dark">داكن</button></div>
+      <div class="card story"><b>صورتك للستوري</b><div class="seg three" id="fmt"><button data-v="tv">تلفزيون</button><button data-v="tv2">تلفزيونين</button><button data-v="pip">صورة بصورة</button></div><div class="seg" id="thm"><button data-v="light">فاتح</button><button data-v="dark">داكن</button></div>
         <div class="story-prev"><canvas id="storyCv" width="1080" height="1920"></canvas></div>
         <div class="row2"><button class="btn" id="dl">${I.dl} حمّل الصورة</button><button class="btn ghost" id="sh">${I.share} شارك</button></div></div>
       <a class="btn ghost wide" href="${IG}" target="_blank" rel="noopener" id="ig">شارك مع صحابك</a>
@@ -699,7 +699,7 @@
       <div id="hostEnd"></div>
       <p class="sig"><bdi dir="ltr">@eyad.hloubi</bdi> · صار بدها قعدة.</p></section>`);
     const sc = { key, el: e };
-    let fmt = 'cover', thm = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    let fmt = 'tv', thm = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     function paintStory() {
       $$('#fmt button', e).forEach(b => b.classList.toggle('on', b.dataset.v === fmt));
       $$('#thm button', e).forEach(b => b.classList.toggle('on', b.dataset.v === thm));
@@ -809,115 +809,78 @@
     const handle = (y, col) => T('⁦@eyad.hloubi⁩ · صار بدها قعدة.', W / 2, y, 34, col || C.sub, 600);
     const placeTxt = r.place < 3 ? ['الأول', 'التاني', 'التالت'][r.place] : (r.place + 1);
 
-    if (fmt === 'cover') {
-      // ═══ غلاف مجلة زمان ═══
-      x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
-      x.fillStyle = myCol; x.fillRect(0, 0, W, 300);
-      x.globalAlpha = 0.14; x.fillStyle = '#000'; for (let i = 0; i < W; i += 28) x.fillRect(i, 0, 12, 300); x.globalAlpha = 1;
-      x.fillStyle = C.ink; x.fillRect(0, 296, W, 8);
-      T('قعدة زمان', W / 2, 150, 170, '#1B2238', 600, 'Marhey');
-      T('العدد ' + stamp + ' · ' + sess, W / 2, 262, 32, 'rgba(27,34,56,.8)', 700, undefined, 'center', 960);
-      // الصورة
-      const px = 80, py = 360, pw = 920, phh = 1060;
-      box(px, py, pw, phh, 26, C.card, 8, 18);
-      photoIn(px, py, pw, phh, 26);
-      const gr = x.createLinearGradient(0, py + phh * 0.55, 0, py + phh); gr.addColorStop(0, 'rgba(10,14,25,0)'); gr.addColorStop(1, 'rgba(10,14,25,.88)');
-      x.save(); rrp(x, px, py, pw, phh, 26); x.clip(); x.fillStyle = gr; x.fillRect(px, py, pw, phh); x.restore();
-      x.lineWidth = 8; x.strokeStyle = C.ink; rrp(x, px, py, pw, phh, 26); x.stroke();
-      T(name || 'لاعب بلا اسم', W / 2, py + phh - 150, 124, '#FFFDF6', 600, 'Marhey', 'center', 840);
-      // شارة اللقب
-      x.font = '700 50px "IBM Plex Sans Arabic"'; const tw = Math.min(800, x.measureText(title).width + 70);
-      box(W / 2 - tw / 2, py + phh - 76, tw, 76, 38, C.b, 5, 0);
-      T(title, W / 2, py + phh - 38, 46, '#1B2238', 700, undefined, 'center', 760);
-      // ختم المركز
-      x.save(); x.translate(px + 150, py + 120); x.rotate(-0.16);
-      x.fillStyle = C.ink; x.beginPath(); x.arc(10, 12, 120, 0, TAU); x.fill();
-      x.fillStyle = C.r; x.beginPath(); x.arc(0, 0, 120, 0, TAU); x.fill(); x.lineWidth = 7; x.strokeStyle = C.ink; x.stroke();
-      x.setLineDash([10, 9]); x.lineWidth = 4; x.strokeStyle = '#FFFDF6'; x.beginPath(); x.arc(0, 0, 98, 0, TAU); x.stroke(); x.setLineDash([]);
-      T('المركز', 0, -42, 34, '#FFFDF6', 700); T(String(placeTxt), 0, 18, typeof placeTxt === 'number' ? 92 : 66, '#FFFDF6', 600, 'Marhey'); T('من ' + n, 0, 74, 28, '#FFFDF6', 700);
+    // ═══ عناصر مشتركة: التلفزيون، الصورة الجماعية، لوحة الاسم ═══
+    const gpIn = (bx, by, bw, bh, rad) => { x.save(); rrp(x, bx, by, bw, bh, rad); x.clip(); if (gp) { const s = Math.max(bw / gp.width, bh / gp.height); x.drawImage(gp, bx + (bw - gp.width * s) / 2, by + (bh - gp.height * s) / 2, gp.width * s, gp.height * s); } else { x.fillStyle = '#232B45'; x.fillRect(bx, by, bw, bh); T(S.settings.sessionName || 'الشلة', bx + bw / 2, by + bh / 2, 54, '#F3EAD8', 600, 'Marhey', 'center', bw - 60); } x.restore(); };
+    const scan = (bx, by, bw, bh, rad) => { x.save(); rrp(x, bx, by, bw, bh, rad); x.clip(); x.fillStyle = 'rgba(0,0,0,.07)'; for (let yy = by; yy < by + bh; yy += 7) x.fillRect(bx, yy, bw, 3); const gl = x.createRadialGradient(bx + bw * 0.3, by + bh * 0.2, 10, bx + bw * 0.3, by + bh * 0.2, bw * 0.9); gl.addColorStop(0, 'rgba(255,255,255,.14)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gl; x.fillRect(bx, by, bw, bh); x.restore(); };
+    const tv = (tx, ty, tw, th, body, screen, ch, ant = true) => {
+      const kn = Math.min(120, tw * 0.13), pad = Math.max(30, tw * 0.045);
+      if (ant) { const cx = tx + (tw - kn) / 2, top = ty - Math.min(100, th * 0.14); x.lineCap = 'round'; x.lineWidth = 12; x.strokeStyle = C.ink; x.beginPath(); x.moveTo(cx, ty + 4); x.lineTo(cx - tw * 0.14, top); x.moveTo(cx, ty + 4); x.lineTo(cx + tw * 0.14, top); x.stroke(); for (const s of [-1, 1]) { x.beginPath(); x.arc(cx + s * tw * 0.14, top, 17, 0, TAU); x.fillStyle = C.b; x.fill(); x.lineWidth = 8; x.stroke(); } }
+      box(tx, ty, tw, th, Math.min(80, th * 0.11), body, 11, 22);
+      const sx = tx + pad, sy = ty + pad, sw = tw - pad * 2 - kn, sh = th - pad * 2;
+      screen(sx, sy, sw, sh, Math.min(54, sh * 0.08));
+      scan(sx, sy, sw, sh, Math.min(54, sh * 0.08));
+      x.lineWidth = 9; x.strokeStyle = C.ink; rrp(x, sx, sy, sw, sh, Math.min(54, sh * 0.08)); x.stroke();
+      for (let i = 0; i < 2; i++) { const kx = tx + tw - pad - kn / 2 + 6, ky = ty + th * (0.36 + i * 0.26); x.beginPath(); x.arc(kx, ky, kn * 0.3, 0, TAU); x.fillStyle = C.b; x.fill(); x.lineWidth = 7; x.strokeStyle = C.ink; x.stroke(); x.beginPath(); x.moveTo(kx, ky); x.lineTo(kx + kn * 0.18, ky - kn * 0.18); x.lineWidth = 6; x.stroke(); }
+      if (ch) { x.font = '700 40px ui-monospace, monospace'; const cw = x.measureText(ch).width + 34; x.fillStyle = 'rgba(10,14,25,.72)'; rrp(x, sx + sw - cw - 26, sy + 24, cw, 58, 14); x.fill(); T(ch, sx + sw - cw / 2 - 26, sy + 54, 40, C.b, 700, 'ui-monospace, monospace', 'center'); }
+      return { sx, sy, sw, sh };
+    };
+    const chTxt = '⁦CH ' + (r.place + 1) + '⁩';
+    const statLine = (r.place + 1) + ' من ' + n + ' · ' + r.pts + ' نقطة' + (wins ? ' · ربح ' + wins : '');
+    const extra = [teamTxt, gen, bestName !== '—' ? 'أحلى لعبة: ' + bestName : ''].filter(Boolean).join(' · ');
+    const plate = (px, py, pw, ph) => {
+      box(px, py, pw, ph, 38, C.card, 8, 14);
+      T(name || 'لاعب بلا اسم', px + pw / 2, py + ph * 0.27, 100, C.text, 600, 'Marhey', 'center', pw - 80);
+      x.font = '700 46px "IBM Plex Sans Arabic"'; const tw = Math.min(pw - 100, x.measureText(title).width + 70);
+      box(px + pw / 2 - tw / 2, py + ph * 0.5, tw, 72, 36, C.b, 5, 0); T(title, px + pw / 2, py + ph * 0.5 + 37, 44, '#1B2238', 700, undefined, 'center', tw - 30);
+      T(statLine, px + pw / 2, py + ph * 0.84, 36, C.sub, 700, undefined, 'center', pw - 60);
+    };
+    const photoFrame = (fx, fy, fw, fh, rot, label) => {
+      x.save(); x.translate(fx + fw / 2, fy + fh / 2); x.rotate(rot);
+      x.fillStyle = C.ink; x.fillRect(-fw / 2 + 14, -fh / 2 + 16, fw, fh);
+      x.fillStyle = '#FFFDF6'; x.fillRect(-fw / 2, -fh / 2, fw, fh); x.lineWidth = 6; x.strokeStyle = C.ink; x.strokeRect(-fw / 2, -fh / 2, fw, fh);
+      gpIn(-fw / 2 + 26, -fh / 2 + 26, fw - 52, fh - 110, 6);
+      T(label, 0, fh / 2 - 44, 46, '#1B2238', 600, 'Marhey', 'center', fw - 60);
+      x.fillStyle = 'rgba(242,193,78,.85)'; x.save(); x.translate(0, -fh / 2 - 4); x.rotate(-0.04); x.fillRect(-90, -24, 180, 48); x.restore();
       x.restore();
-      if (bgi) sticker(bgi, px + pw - 110, py + 120, 120, 0.14);
-      // المؤشرات
-      const sy = 1480, sw = 290, sg = 25; const items = [[String(r.pts), 'نقطة'], [String(wins), wins === 1 ? 'لعبة ربحها' : 'ألعاب ربحها'], [bestName, 'أحلى لعبة']];
-      items.forEach(([v, l], i) => { const bx = W - 80 - sw - i * (sw + sg); box(bx, sy, sw, 190, 24, C.card, 5, 10); T(v, bx + sw / 2, sy + 78, v.length > 6 ? 40 : 76, C.text, 700, v.length > 6 ? undefined : 'Marhey', 'center', sw - 30); T(l, bx + sw / 2, sy + 150, 30, C.sub, 700, undefined, 'center', sw - 30); });
-      T([teamTxt, gen].filter(Boolean).join(' · ') || ('من أصل ' + nP + ' لاعبين'), W / 2, 1740, 38, C.text, 700, undefined, 'center', 920);
-      handle(1840);
-    } else if (fmt === 'polaroid') {
-      // ═══ بولاريد على ورق جدران السبعينات ═══
-      x.fillStyle = dark ? '#1B2238' : '#EADBC0'; x.fillRect(0, 0, W, H);
-      const pal2 = [C.o, C.b, C.a, C.r]; const tile = 180;
-      for (let ty = -tile; ty < H + tile; ty += tile) for (let tx = 0; tx < W + tile; tx += tile) {
-        x.save(); x.translate(tx, ty); x.globalAlpha = dark ? 0.16 : 0.22;
-        for (let k = 4; k >= 1; k--) { x.fillStyle = pal2[(k + Math.round(tx / tile) + Math.round(ty / tile)) % 4]; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, k * 40, 0, Math.PI / 2); x.closePath(); x.fill(); }
-        x.restore();
-      }
-      x.globalAlpha = 1;
-      T('قعدة زمان', W / 2, 140, 110, C.text, 600, 'Marhey');
-      T(sess, W / 2, 222, 34, C.sub, 700, undefined, 'center', 920);
-      x.save(); x.translate(W / 2, 960); x.rotate(-0.035);
-      const fw = 880, fh = 1120;
-      x.fillStyle = 'rgba(0,0,0,.35)'; rrp(x, -fw / 2 + 18, -fh / 2 + 22, fw, fh, 8); x.fill();
-      x.fillStyle = '#FFFDF6'; rrp(x, -fw / 2, -fh / 2, fw, fh, 8); x.fill(); x.lineWidth = 4; x.strokeStyle = C.ink; x.stroke();
-      photoIn(-fw / 2 + 50, -fh / 2 + 50, fw - 100, 790, 4);
-      x.lineWidth = 3; x.strokeStyle = C.ink; x.strokeRect(-fw / 2 + 50, -fh / 2 + 50, fw - 100, 790);
-      T(stamp, fw / 2 - 74, -fh / 2 + 800, 40, '#F07A2A', 700, 'ui-monospace, monospace', 'right');
-      T(name || 'لاعب بلا اسم', 0, fh / 2 - 190, 110, '#1B2238', 600, 'Marhey', 'center', 760);
-      T(title, 0, fh / 2 - 90, 54, C.o, 700, undefined, 'center', 760);
-      x.restore();
-      // لاصق
-      for (const [tx, ty, rt] of [[W / 2 - 230, 400, -0.18], [W / 2 + 230, 395, 0.2]]) { x.save(); x.translate(tx, ty); x.rotate(rt); x.fillStyle = 'rgba(242,193,78,.78)'; x.fillRect(-90, -30, 180, 60); x.restore(); }
-      // وسام المركز
-      x.save(); x.translate(W - 190, 470); x.rotate(0.12);
-      x.fillStyle = C.r; x.beginPath(); x.moveTo(-50, 60); x.lineTo(-80, 210); x.lineTo(-30, 180); x.lineTo(-10, 230); x.lineTo(10, 70); x.fill(); x.fillStyle = C.d; x.beginPath(); x.moveTo(50, 60); x.lineTo(80, 210); x.lineTo(30, 180); x.lineTo(10, 230); x.lineTo(-10, 70); x.fill();
-      for (let i = 0; i < 24; i++) { const a0 = i / 24 * TAU; x.fillStyle = i % 2 ? C.b : C.o; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, 130, a0, a0 + TAU / 24); x.fill(); }
-      x.lineWidth = 6; x.strokeStyle = C.ink; x.beginPath(); x.arc(0, 0, 130, 0, TAU); x.stroke();
-      x.fillStyle = '#FFFDF6'; x.beginPath(); x.arc(0, 0, 92, 0, TAU); x.fill(); x.stroke();
-      T('المركز', 0, -34, 30, '#1B2238', 700); T(String(placeTxt), 0, 20, typeof placeTxt === 'number' ? 80 : 56, '#1B2238', 600, 'Marhey');
-      x.restore();
-      // ستيكرات الألعاب
-      const spots = [[150, 1560, -0.2], [330, 1640, 0.15], [W - 160, 1590, 0.22], [130, 640, 0.1], [W - 130, 1220, -0.12]];
-      icons.slice(0, 5).forEach((im, i) => sticker(im, spots[i][0], spots[i][1], 110, spots[i][2]));
-      box(W / 2 - 260, 1600, 520, 150, 30, C.card, 5, 10);
-      T(r.pts + ' نقطة · ربح ' + wins, W / 2, 1650, 42, C.text, 700, undefined, 'center', 480);
-      T('أحلى لعبة: ' + bestName, W / 2, 1708, 32, C.sub, 700, undefined, 'center', 480);
-      if (teamTxt || gen) T([teamTxt, gen].filter(Boolean).join(' · '), W / 2, 1790, 34, C.text, 700, undefined, 'center', 900);
-      handle(1860);
+    };
+    // الخلفية
+    x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
+    x.fillStyle = dark ? 'rgba(243,234,216,.06)' : 'rgba(27,34,56,.07)'; for (let yy = 30; yy < H; yy += 46) for (let xx = (yy / 46) % 2 ? 23 : 0; xx < W; xx += 46) { x.beginPath(); x.arc(xx, yy, 3.5, 0, TAU); x.fill(); }
+    const gLabel = 'الشلة · ' + (S.settings.sessionName || '');
+    if (fmt === 'tv') {
+      T('قعدة زمان', W / 2, 105, 96, C.text, 600, 'Marhey');
+      T(sess, W / 2, 182, 32, C.sub, 700, undefined, 'center', 900);
+      tv(70, 360, 940, 650, C.o, (sx, sy, sw, sh, rd) => photoIn(sx, sy, sw, sh, rd), chTxt);
+      plate(110, 1050, 860, 320);
+      if (gp) photoFrame(260, 1420, 560, 390, -0.03, gLabel.length > 22 ? 'الشلة' : gLabel);
+      else if (extra) T(extra, W / 2, 1480, 38, C.text, 700, undefined, 'center', 900);
+      handle(1878);
+    } else if (fmt === 'tv2') {
+      T('قعدة زمان', W / 2, 100, 90, C.text, 600, 'Marhey');
+      tv(110, 290, 860, 640, C.o, (sx, sy, sw, sh, rd) => photoIn(sx, sy, sw, sh, rd), chTxt);
+      // شريط الاسم بين التلفزيونين
+      box(60, 975, 960, 190, 30, C.r, 8, 12);
+      T(name || 'لاعب بلا اسم', W / 2, 1040, 92, '#FFFDF6', 600, 'Marhey', 'center', 880);
+      T(title + ' · ' + statLine, W / 2, 1122, 34, '#FFFDF6', 700, undefined, 'center', 900);
+      tv(170, 1280, 740, 540, C.a, (sx, sy, sw, sh, rd) => gpIn(sx, sy, sw, sh, rd), '\u2066CH 2\u2069', false);
+      T(gp ? 'الشلة · ' + sess : sess, W / 2, 1238, 30, C.sub, 700, undefined, 'center', 900);
+      handle(1878);
     } else {
-      // ═══ كرت لاعب ═══
-      x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
-      x.save(); x.globalAlpha = dark ? 0.2 : 0.16; x.fillStyle = myCol; for (let i = -H; i < W + H; i += 90) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 40, 0); x.lineTo(i + 40 - H, H); x.lineTo(i - H, H); x.fill(); } x.restore();
-      const cx0 = 90, cy0 = 110, cw = W - 180, chh = 1650;
-      box(cx0, cy0, cw, chh, 54, myCol, 8, 20);
-      const ix = cx0 + 34, iy = cy0 + 34, iw = cw - 68, ih = chh - 68;
-      x.fillStyle = C.card; rrp(x, ix, iy, iw, ih, 34); x.fill(); x.lineWidth = 5; x.strokeStyle = C.ink; x.stroke();
-      T('قعدة زمان', ix + iw - 40, iy + 70, 60, C.text, 600, 'Marhey', 'right');
-      T(sess, ix + iw - 40, iy + 130, 28, C.sub, 700, undefined, 'right', 520);
-      // شارة المركز
-      x.save(); x.translate(ix + 120, iy + 105);
-      x.fillStyle = C.ink; x.beginPath(); for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAU - Math.PI / 2; x.lineTo(8 + Math.cos(a0) * 92, 10 + Math.sin(a0) * 92); } x.fill();
-      x.fillStyle = C.b; x.beginPath(); for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAU - Math.PI / 2; x.lineTo(Math.cos(a0) * 92, Math.sin(a0) * 92); } x.closePath(); x.fill(); x.lineWidth = 6; x.stroke();
-      T(String(r.place + 1), 0, -4, 84, '#1B2238', 600, 'Marhey'); T('من ' + n, 0, 52, 26, '#1B2238', 700);
-      x.restore();
-      // الصورة بقوس
-      const ax = ix + 50, ay = iy + 220, aw = iw - 100, ah = 820;
-      const arch = () => { x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + aw / 2); x.arc(ax + aw / 2, ay + aw / 2, aw / 2, Math.PI, 0); x.lineTo(ax + aw, ay + ah); x.closePath(); };
-      photoIn(ax, ay, aw, ah, 0, arch); arch(); x.lineWidth = 6; x.strokeStyle = C.ink; x.stroke();
-      if (bgi) sticker(bgi, ax + aw - 60, ay + ah - 40, 110, 0.12, C.b);
-      // شريط الاسم
-      const by = ay + ah + 20;
-      x.fillStyle = C.ink; x.beginPath(); x.moveTo(ix + 10 + 10, by + 12); x.lineTo(ix + iw - 10 + 10, by + 12); x.lineTo(ix + iw - 50 + 10, by + 75 + 12); x.lineTo(ix + iw - 10 + 10, by + 150 + 12); x.lineTo(ix + 10 + 10, by + 150 + 12); x.lineTo(ix + 50 + 10, by + 75 + 12); x.closePath(); x.fill();
-      x.fillStyle = C.r; x.beginPath(); x.moveTo(ix + 10, by); x.lineTo(ix + iw - 10, by); x.lineTo(ix + iw - 50, by + 75); x.lineTo(ix + iw - 10, by + 150); x.lineTo(ix + 10, by + 150); x.lineTo(ix + 50, by + 75); x.closePath(); x.fill(); x.lineWidth = 5; x.strokeStyle = C.ink; x.stroke();
-      T(name || 'لاعب بلا اسم', W / 2, by + 78, 96, '#FFFDF6', 600, 'Marhey', 'center', iw - 160);
-      T(title, W / 2, by + 220, 52, C.o, 700, undefined, 'center', iw - 80);
-      // جدول المؤشرات
-      const rows2 = [['المركز', (r.place + 1) + ' من ' + n], ['النقاط', String(r.pts)], ['ألعاب ربحها', String(wins)], ['أحلى لعبة', bestName]];
-      if (teamTxt) rows2.splice(1, 0, ['الفريق', teamTxt]);
-      const ty0 = by + 300, rh = Math.min(70, (iy + ih - 40 - ty0) / rows2.length);
-      rows2.forEach(([l, v], i) => { const yy = ty0 + i * rh; T(l, ix + iw - 60, yy, 36, C.sub, 700, undefined, 'right'); T(v, ix + 60, yy, 40, C.text, 700, undefined, 'left', 420); x.setLineDash([3, 10]); x.lineWidth = 3; x.strokeStyle = C.line; x.beginPath(); x.moveTo(ix + 60, yy + rh / 2); x.lineTo(ix + iw - 60, yy + rh / 2); x.stroke(); x.setLineDash([]); });
-      handle(1835, C.text);
+      // صورة بصورة: صورتك على كامل الشاشة، والشلة بزاوية الشاشة
+      T('قعدة زمان', W / 2, 105, 96, C.text, 600, 'Marhey');
+      T(sess, W / 2, 182, 32, C.sub, 700, undefined, 'center', 900);
+      const sc2 = tv(50, 350, 980, 880, C.o, (sx, sy, sw, sh, rd) => photoIn(sx, sy, sw, sh, rd), chTxt);
+      if (gp) {
+        const pw2 = sc2.sw * 0.5, ph2 = pw2 * 0.75, px2 = sc2.sx + 26, py2 = sc2.sy + sc2.sh - ph2 - 26;
+        x.fillStyle = C.ink; rrp(x, px2 + 10, py2 + 12, pw2, ph2, 18); x.fill();
+        x.fillStyle = '#FFFDF6'; rrp(x, px2 - 8, py2 - 8, pw2 + 16, ph2 + 16, 22); x.fill();
+        gpIn(px2, py2, pw2, ph2, 16); x.lineWidth = 5; x.strokeStyle = C.ink; rrp(x, px2 - 8, py2 - 8, pw2 + 16, ph2 + 16, 22); x.stroke();
+        x.font = '700 32px "IBM Plex Sans Arabic"'; const lw = x.measureText('الشلة').width + 36; x.fillStyle = C.b; rrp(x, px2 + pw2 - lw - 12, py2 + 12, lw, 50, 25); x.fill(); x.lineWidth = 4; x.stroke(); T('الشلة', px2 + pw2 - lw / 2 - 12, py2 + 38, 32, '#1B2238', 700);
+      }
+      plate(90, 1290, 900, 340);
+      if (extra) T(extra, W / 2, 1740, 36, C.text, 700, undefined, 'center', 920);
+      handle(1878);
     }
-    // الصورة الجماعية الصغيرة
-    if (gp) { const gw = 240, gh = 180, gx = fmt === 'card' ? 70 : 60, gy = fmt === 'cover' ? 1240 : fmt === 'polaroid' ? 1330 : 1500; x.save(); x.translate(gx + gw / 2, gy + gh / 2); x.rotate(-0.07); x.fillStyle = C.ink; x.fillRect(-gw / 2 - 12 + 8, -gh / 2 - 12 + 8, gw + 24, gh + 24); x.fillStyle = '#FFFDF6'; x.fillRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); const s2 = Math.max(gw / gp.width, gh / gp.height); x.save(); x.beginPath(); x.rect(-gw / 2, -gh / 2, gw, gh); x.clip(); x.drawImage(gp, -gp.width * s2 / 2, -gp.height * s2 / 2, gp.width * s2, gp.height * s2); x.restore(); x.lineWidth = 4; x.strokeStyle = C.ink; x.strokeRect(-gw / 2 - 12, -gh / 2 - 12, gw + 24, gh + 24); x.restore(); }
   }
   function rrp(x, X0, Y0, w, h, r) { x.beginPath(); x.moveTo(X0 + r, Y0); x.arcTo(X0 + w, Y0, X0 + w, Y0 + h, r); x.arcTo(X0 + w, Y0 + h, X0, Y0 + h, r); x.arcTo(X0, Y0 + h, X0, Y0, r); x.arcTo(X0, Y0, X0 + w, Y0, r); x.closePath(); }
 
