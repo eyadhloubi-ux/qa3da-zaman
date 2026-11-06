@@ -32,6 +32,7 @@
     crown: '<svg viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="var(--c4)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
     cam: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
     img: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>',
+    people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M3 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="17" cy="9" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 14.2c2.6.2 4.5 2 4.5 4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     stop: '<svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.4"/><rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="currentColor"/></svg>',
     tv: '<svg viewBox="0 0 24 24"><path d="M8 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="7" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
     share: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -181,6 +182,7 @@
 
   // ───────── الشريط العلوي ─────────
   function updateTopbar() {
+    const pb = $('#plBtn'); if (pb) pb.hidden = !(code && S && me() && isHost());
     const mb = $('#endBtn'); const showEnd = !!(code && S && me() && isHost() && S.phase !== 'lobby'); if (mb) mb.hidden = !showEnd; document.body.classList.toggle('has-end', showEnd);
     const t = $('#topTitle'); if (!t) return;
     const inRoom = !!(code && S && me());
@@ -387,15 +389,14 @@
   function playerMenu(id) {
     if (!isHost()) { if (id === pid) { wantProfile = true; screen = null; render(); } return; }
     const p = S.players[id]; if (!p) return;
-    const inLobby = S.phase === 'lobby';
     sheet(`<div class="pm-head">${avatar(id, 54)}<div><b>${esc(nameOf(id))}</b><small>${p.connected ? 'متصل' : 'مو متصل'}</small></div></div>
       <label class="fld"><span>عدّل الاسم</span><div class="row2"><input id="rn" maxlength="20" value="${esc(p.name)}"><button class="btn sm" id="rnOk">حفظ</button></div></label>
       ${isTeam() ? `<button class="btn ghost" id="ld">${I.crown} ${gend(id, 'خليه قائد الفريق', 'خليها قائدة الفريق')}</button>` : ''}
-      ${isTeam() && inLobby ? `<div class="fld"><span>انقله لفريق</span><div class="chips">${S.teams.map(t => `<button data-t="${t.i}" class="${p.team === t.i ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div></div>` : ''}
+      ${isTeam() ? `<div class="fld"><span>انقله لفريق${S.phase === 'lobby' ? '' : ' <em>(بيمشي من هلأ)</em>'}</span><div class="chips">${S.teams.map(t => `<button data-t="${t.i}" class="${p.team === t.i ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div></div>` : ''}
       ${id !== pid ? `<button class="btn ghost" id="mh">سلّم ${gend(id, 'الريسة لإله', 'الريسة لإلها')}</button><button class="btn red" id="kk">${gend(id, 'طلّعه من القعدة', 'طلّعها من القعدة')}</button>` : ''}`, (s, close) => {
       $('#rnOk', s).onclick = () => { host('rename', { id, name: $('#rn', s).value.trim() }); close(); };
       const ld = $('#ld', s); if (ld) ld.onclick = () => { host('leader', { id }); close(); };
-      $$('.chips button', s).forEach(b => b.onclick = () => { host('moveTeam', { id, team: +b.dataset.t }); close(); });
+      $$('.chips button', s).forEach(b => b.onclick = () => { host('moveTeam', { id, team: +b.dataset.t }); close(); toast(gend(id, 'انتقل', 'انتقلت') + ' لـ' + b.textContent); });
       const mh = $('#mh', s); if (mh) mh.onclick = () => { if (!p.connected) return toast('لازم يكون متصل'); host('makeHost', { id }); close(); };
       const kk = $('#kk', s); if (kk) kk.onclick = () => { close(); confirmBox(`أكيد بدك تطلّع ${esc(nameOf(id))}؟ ما رح يقدر يرجع.`, 'طلّع', () => host('kick', { id })); };
     });
@@ -928,6 +929,17 @@
     }; img.src = src;
   }
 
+  // ═════════════ قائمة اللاعبين (للريس، بأي وقت) ═════════════
+  function playersMenu() {
+    if (!isHost()) return;
+    const ids = S.order.filter(id => S.players[id] && !S.players[id].kicked);
+    const row = id => { const p = S.players[id]; return `<button class="pl-row" data-id="${esc(id)}" style="--pc:var(--c${p.color})">${avatar(id, 38)}<span><b>${esc(nameOf(id))}${id === pid ? ' <em>(إنت)</em>' : ''}</b><small>${p.connected ? 'متصل' : 'مفصول'}${isTeam() && p.team != null ? ' · ' + esc(teamName(p.team)) : ''}</small></span><i>›</i></button>`; };
+    const body = isTeam() ? S.teams.map(t => `<h4 class="pl-team" style="--pc:var(--tc${t.i})">${esc(t.name)} (${t.members.length})</h4>${t.members.map(row).join('') || '<p class="hint">ما في حدا</p>'}`).join('') : ids.map(row).join('');
+    sheet(`<h3>اللاعبين (${ids.length})</h3><p class="hint">اكبس على أي حدا لتطلّعه${isTeam() ? '، أو تغيّرله فريقه' : ''}، أو تعدّل اسمه. بأي وقت، حتى بنص اللعبة.</p><div class="pl-list">${body}</div>`, (s, close) => {
+      $$('.pl-row', s).forEach(b => b.onclick = () => { close(); playerMenu(b.dataset.id); });
+    });
+  }
+
   // ═════════════ قائمة الإنهاء (للريس) ═════════════
   function endMenu() {
     if (!isHost()) return;
@@ -978,6 +990,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('#helpBtn').innerHTML = I.help; $('#helpBtn').onclick = help;
     $('#endBtn').innerHTML = I.stop + '<span>إنهاء</span>'; $('#endBtn').onclick = endMenu;
+    $('#plBtn').innerHTML = I.people; $('#plBtn').onclick = playersMenu;
     $('#themeBtn').onclick = () => { setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); if (screen && screen.refresh) screen.refresh(); };
     setTheme(document.documentElement.dataset.theme);
     $('#homeLink').onclick = () => { if (code && S && S.phase !== 'final') return confirmBox('بدك تطلع من القعدة؟', 'اطلع', () => { leaveRoom(); screen = null; render(); }); leaveRoom(); screen = null; render(); };

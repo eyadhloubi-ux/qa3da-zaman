@@ -339,7 +339,7 @@ function endRound(r) {
   const c = r.cur; if (!c || r.phase !== 'play') return;
   clearTimers(r);
   const mult = c.bet && c.bet.status === 'ok' ? 2 : 1;
-  const indiv = rankList(c.active.filter(id => r.players[id]).map(id => ({ id, rk: c.results[id] ? c.results[id].rk : -1e12, missing: !c.results[id] })));
+  const indiv = rankList(c.active.filter(id => r.players[id] && !r.players[id].kicked).map(id => ({ id, rk: c.results[id] ? c.results[id].rk : -1e12, missing: !c.results[id] })));
   const n = indiv.length;
   const outcome = { mult, players: [], teams: [] };
   for (const e of indiv) {
@@ -351,7 +351,7 @@ function endRound(r) {
   }
   if (isTeamMode(r)) {
     const tms = teamsOf(r).map(tm => {
-      const mine = c.active.filter(id => r.players[id] && r.players[id].team === tm.i && c.results[id]);
+      const mine = c.active.filter(id => r.players[id] && !r.players[id].kicked && r.players[id].team === tm.i && c.results[id]);
       if (!mine.length) return { id: tm.i, playing: false };
       const avgRk = mine.reduce((a, id) => a + c.results[id].rk, 0) / mine.length;
       const vs = mine.map(id => c.results[id].v).filter(v => typeof v === 'number');
@@ -424,7 +424,7 @@ function hostAction(r, m, pid) {
     }
     case 'teamName': { if (!s.teams[m.i]) s.teams[m.i] = {}; s.teams[m.i].name = String(m.name || '').slice(0, 24) || TEAM_NAMES[m.i]; break; }
     case 'leader': { const p = r.players[m.id]; if (p && p.team != null) { if (!s.teams[p.team]) s.teams[p.team] = {}; s.teams[p.team].leader = m.id; } break; }
-    case 'moveTeam': { const p = r.players[m.id]; if (p && r.phase === 'lobby') p.team = Math.min(s.teamCount - 1, Math.max(0, +m.team)); break; }
+    case 'moveTeam': { const p = r.players[m.id]; if (p && !p.kicked && isTeamMode(r)) p.team = Math.min(s.teamCount - 1, Math.max(0, +m.team)); break; }
     case 'shuffleTeams': {
       if (r.phase !== 'lobby') break;
       const ids = shuffle(activeIds(r)); ids.forEach((id, i) => { r.players[id].team = i % s.teamCount; });
@@ -435,7 +435,11 @@ function hostAction(r, m, pid) {
       const p = r.players[m.id]; if (!p || m.id === pid) break;
       p.kicked = true; p.connected = false; r.kicked.add(m.id);
       for (const [ws, meta] of sockets) if (meta.code === r.code && meta.pid === m.id) { send(ws, { t: 'kicked' }); meta.code = null; }
-      if (r.phase === 'play') { if (r.cur.chairs) r.cur.chairs.alive = r.cur.chairs.alive.filter(x => x !== m.id); if (r.cur.hat) hatTick(r); checkAllDone(r); }
+      if (r.cur && r.phase === 'play') {
+        if (r.cur.chairs) { const ch = r.cur.chairs; ch.alive = ch.alive.filter(x => x !== m.id); ch.seats = ch.seats.map(x => x === m.id ? null : x); }
+        if (r.cur.hat) { r.cur.hat.alive = r.cur.hat.alive.filter(x => x !== m.id); hatTick(r); }
+        checkAllDone(r);
+      }
       break;
     }
     case 'makeHost': { const p = r.players[m.id]; if (p && !p.kicked && p.connected) { r.hostId = m.id; r.hostLeftAt = null; } break; }

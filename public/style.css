@@ -496,3 +496,10 @@ body.has-end .tt-word{display:none}
 .gp.big svg{width:52px;height:52px}
 .setup .row2{margin-top:0}
 .hint.sm{font-size:12px;margin-top:6px}
+
+/* قائمة اللاعبين */
+.pl-list{display:flex;flex-direction:column;gap:8px}
+.pl-row{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:6px 10px;box-shadow:3px 3px 0 var(--pc)}
+.pl-row>span:not(.av){flex:1;min-width:0}.pl-row .av{flex:0 0 auto}.pl-row b{display:block;font-size:15px}.pl-row b em{font-style:normal;font-weight:400;color:var(--muted);font-size:12px}
+.pl-row small{color:var(--muted);font-size:12px}.pl-row i{font-style:normal;font-size:22px;opacity:.5}
+.pl-team{margin:12px 0 2px;padding-right:10px;border-right:6px solid var(--pc)}
