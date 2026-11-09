@@ -328,6 +328,8 @@ function checkAllDone(r) {
 }
 
 const SOLO_PTS = [5, 3, 2];
+// الأول 5، التاني 3، التالت 2، وبعدهن نقطة لحد نص اللاعبين (تقريب لفوق)، والباقي 0
+function soloPts(place, n) { if (SOLO_PTS[place] != null) return SOLO_PTS[place]; return place < Math.ceil(n / 2) ? 1 : 0; }
 const TEAM_PTS = [3, 2, 1, 0];
 function rankList(entries) { // entries: [{id, rk}] → with place (ties share)
   entries.sort((a, b) => b.rk - a.rk);
@@ -345,7 +347,7 @@ function endRound(r) {
   for (const e of indiv) {
     let pts;
     if (e.missing) pts = 0;
-    else if (r.settings.mode === 'solo') pts = (SOLO_PTS[e.place] != null ? SOLO_PTS[e.place] : 1) * mult;
+    else if (r.settings.mode === 'solo') pts = soloPts(e.place, n) * mult;
     else pts = Math.max(1, n - e.place); // نقاط داخلية لحساب الفريق
     outcome.players.push({ id: e.id, place: e.place, pts, label: c.results[e.id] ? c.results[e.id].label : 'ما لحّق' });
   }

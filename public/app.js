@@ -472,7 +472,7 @@
       const rdy = live.filter(id => S.players[id].ready).length, tot = live.length;
       const allReady = tot >= 2 && rdy === tot;
       const myReady = me().ready;
-      ctl.innerHTML = `<button class="btn ${myReady ? 'ghost' : ''} wide" id="rdy">${myReady ? '✓ ' + myG('جاهز', 'جاهزة') : myG('أنا جاهز', 'أنا جاهزة')}</button><p class="rd">${allReady ? 'الكل جاهز… يلا! 🎬' : rdy + ' من ' + tot + ' جاهزين'}</p><p class="ready-note">لما الكل يكبس «جاهز»، اللعبة بتبلّش لحالها</p>` +
+      ctl.innerHTML = `<button class="btn ${myReady ? 'ghost' : ''} wide" id="rdy">${myReady ? '✓ ' + myG('جاهز', 'جاهزة') : myG('أنا جاهز', 'أنا جاهزة')}</button><p class="rd">${allReady ? 'الكل جاهز… يلا! 🎬' : rdy + ' من ' + tot + ' جاهزين'}</p><div class="rdy-list">${live.map(id => { const q = S.players[id]; return `<span class="rdy-p ${q.ready ? 'on' : ''}">${avatar(id, 30)}<bdi>${esc(q.name)}</bdi><i>${q.ready ? '✓' : '⏳'}</i></span>`; }).join('')}</div><p class="ready-note">لما الكل يكبس «جاهز»، اللعبة بتبلّش لحالها</p>` +
         (isHost() && !allReady ? `<div class="row2"><button class="btn ghost" id="pass">تمرير</button><button class="btn" id="go">بلّش هلأ</button></div>` : '');
       $('#rdy', ctl).onclick = async () => { if (M.sensor) await askSensor(); send({ t: 'ready', v: !me().ready }); };
       const go = $('#go', ctl); if (go) go.onclick = () => { go.disabled = true; host('go'); };
@@ -971,7 +971,7 @@
       <h4>الألعاب</h4>
       <ul class="hgames">${GAME_ORDER.map(g => `<li><i>${I[g]}</i><div><b>${META[g].name}<em>${META[g].mode} بيربح</em></b><small>${META[g].how}</small></div></li>`).join('')}</ul>
       <h4>النقاط</h4>
-      <ul class="hl"><li>بالفردي: الأول 5 نقاط، التاني 3، التالت 2، والباقي نقطة.</li><li>اللي بيطلعوا نفس النتيجة بالضبط، بياخدوا نفس المركز ونفس النقاط.</li><li>بالفرق: نتيجة الفريق هي المتوسط الحسابي لنتايج أعضاءه، والفريق الأول بياخد 3، التاني 2، التالت 1.</li></ul>
+      <ul class="hl"><li>بالفردي: الأول 5 نقاط، التاني 3، التالت 2، وبعدهن كل واحد بالنص الأول من اللاعبين بياخد نقطة، والنص التاني ما بياخد شي.</li><li>اللي بيطلعوا نفس النتيجة بالضبط، بياخدوا نفس المركز ونفس النقاط.</li><li>بالفرق: نتيجة الفريق هي المتوسط الحسابي لنتايج أعضاءه، والفريق الأول بياخد 3، التاني 2، التالت 1.</li></ul>
       <h4>وضع العيلة</h4>
       <div class="fam-help">لما تكون القعدة فيها كبار وصغار، الريس بيشغّل «وضع العيلة». كل لاعب بيختار جيله: <b>📼 جيل الكاسيت</b> (الكبار) أو <b>📱 جيل الموبايل</b> (الصغار). اللعب نفسه ما بيتغيّر، بس بالنتيجة النهائية بتطلع مقارنة: أي جيل كان أشطر بألعاب زمان؟</div>
       <h4>أدوات الريس</h4>

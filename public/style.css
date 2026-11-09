@@ -503,3 +503,9 @@ body.has-end .tt-word{display:none}
 .pl-row>span:not(.av){flex:1;min-width:0}.pl-row .av{flex:0 0 auto}.pl-row b{display:block;font-size:15px}.pl-row b em{font-style:normal;font-weight:400;color:var(--muted);font-size:12px}
 .pl-row small{color:var(--muted);font-size:12px}.pl-row i{font-style:normal;font-size:22px;opacity:.5}
 .pl-team{margin:12px 0 2px;padding-right:10px;border-right:6px solid var(--pc)}
+
+.rdy-list{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px 0 0}
+.rdy-p{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:999px;border:1px solid var(--line,rgba(0,0,0,.12));font-size:13px;opacity:.55}
+.rdy-p.on{opacity:1;border-color:#2e9e5b;background:rgba(46,158,91,.1)}
+.rdy-p i{font-style:normal;font-size:12px}.rdy-p.on i{color:#2e9e5b;font-weight:700}
+.rdy-p .av{flex:none}
