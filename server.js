@@ -328,8 +328,8 @@ function checkAllDone(r) {
 }
 
 const SOLO_PTS = [5, 3, 2];
-// الأول 5، التاني 3، التالت 2، وبعدهن نقطة لحد نص اللاعبين (تقريب لفوق)، والباقي 0
-function soloPts(place, n) { if (SOLO_PTS[place] != null) return SOLO_PTS[place]; return place < Math.ceil(n / 2) ? 1 : 0; }
+// الأول 5، التاني 3، التالت 2، وبعدهن نقطة لحد نص اللاعبين (تقريب لفوق)، والرابع دايماً بياخد نقطة، والباقي 0
+function soloPts(place, n) { if (SOLO_PTS[place] != null) return SOLO_PTS[place]; return place < Math.max(4, Math.ceil(n / 2)) ? 1 : 0; }
 const TEAM_PTS = [3, 2, 1, 0];
 function rankList(entries) { // entries: [{id, rk}] → with place (ties share)
   entries.sort((a, b) => b.rk - a.rk);
